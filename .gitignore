@@ -8,3 +8,6 @@ docker/*/*.sql
 docker/*/*.sql-esrc
 src/main/resources/onelogin.saml.properties
 src/main/resources/sso.properties
+/fortify_aviator_remediation/.env
+/fortify_aviator_remediation/.venv/
+/fortify_aviator_remediation/app/__pycache__/

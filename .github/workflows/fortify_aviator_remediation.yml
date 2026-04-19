@@ -1,0 +1,54 @@
+name: Fortify Aviator Remediation
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to evaluate
+        required: true
+  pull_request:
+    branches: [master, dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: fortify-aviator-remediation-${{ github.head_ref || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  remediate:
+    # Repository secrets are not available to workflows triggered from fork PRs.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      FOD_BASE_URL: ${{ secrets.FOD_BASE_URL }}
+      FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
+      FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
+      FOD_TENANT: ${{ secrets.FOD_TENANT }}
+      FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
+      FOD_VERIFY_SSL: true
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+      GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r fortify_aviator_remediation/requirements.txt
+
+      - name: Run Fortify Aviator remediation engine
+        run: python fortify_aviator_remediation/app/remediation_engine.py
