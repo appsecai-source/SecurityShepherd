@@ -5,8 +5,7 @@ The [OWASP Security Shepherd Project](http://bit.ly/owaspSecurityShepherd) is a 
 [![Build and Test](https://github.com/OWASP/SecurityShepherd/actions/workflows/test.yml/badge.svg)](https://github.com/OWASP/SecurityShepherd/actions/workflows/test.yml)  
 
 # Security Automation
-Fortify on Demand PR scanning lives in `.github/workflows/fortify.yml`.
-Fortify Aviator remediation automation lives in `.github/workflows/fortify_aviator_remediation.yml`.
+Fortify on Demand scanning and Fortify Aviator remediation are combined in `.github/workflows/fortify.yml`.
 The supporting Python remediation engine and setup notes live in `fortify_aviator_remediation/`.
 
 # Where can I download Security Shepherd?

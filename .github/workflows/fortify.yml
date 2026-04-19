@@ -1,4 +1,4 @@
-name: Fortify on Demand PR Automation
+name: Fortify FoD Scan and Aviator Remediation
 
 on:
   push:
@@ -22,28 +22,75 @@ on:
       - '.sonarcloud.properties'
       - 'LICENSE'
       - 'Vagrantfile'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number for remediation; leave blank to run scan only
+        required: false
+        default: ''
 
 concurrency:
-  group: fortify-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: fortify-${{ github.workflow }}-${{ github.head_ref || github.ref_name || github.run_id }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-  security-events: write
-
 jobs:
+  resolve-pr-context:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      has_pr_context: ${{ steps.resolve.outputs.has_pr_context }}
+      is_same_repo_pr: ${{ steps.resolve.outputs.is_same_repo_pr }}
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      base_ref: ${{ steps.resolve.outputs.base_ref }}
+    steps:
+      - id: resolve
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repoFullName = `${context.repo.owner}/${context.repo.repo}`;
+            const manualPrNumber = context.eventName === 'workflow_dispatch'
+              ? (context.payload.inputs?.pr_number || '').trim()
+              : '';
+
+            let pr = null;
+            if (context.eventName === 'pull_request') {
+              pr = context.payload.pull_request;
+            } else if (manualPrNumber) {
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: Number(manualPrNumber),
+              });
+              pr = data;
+            }
+
+            core.setOutput('has_pr_context', pr ? 'true' : 'false');
+            core.setOutput('pr_number', pr ? String(pr.number) : '');
+            core.setOutput('head_sha', pr ? pr.head.sha : '');
+            core.setOutput('base_ref', pr ? pr.base.ref : '');
+            core.setOutput(
+              'is_same_repo_pr',
+              pr ? String(pr.head.repo.full_name === repoFullName) : 'true'
+            );
+
   fortify-fod:
-    # Repository secrets are not available to workflows triggered from fork PRs.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: resolve-pr-context
+    if: needs.resolve-pr-context.outputs.is_same_repo_pr == 'true'
     name: fortify-fod
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      security-events: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ needs.resolve-pr-context.outputs.head_sha || github.sha }}
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
@@ -57,16 +104,52 @@ jobs:
         with:
           sast-scan: true
         env:
-          FOD_URL: https://ams.fortify.com
+          FOD_URL: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
+          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
+          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
           FOD_TENANT: ${{ secrets.FOD_TENANT }}
-          FOD_USER: ${{ secrets.FOD_USER }}
-          FOD_PASSWORD: ${{ secrets.FOD_PAT }}
-          FOD_RELEASE: ${{ github.repository }}:${{ github.head_ref || github.ref_name }}
-          DO_SETUP: true
-          SETUP_EXTRA_OPTS: >-
-            --copy-from "${{ github.repository }}:${{ github.base_ref || github.event.repository.default_branch }}"
+          # Numeric FoD release identifier; release must already exist and be configured.
+          FOD_RELEASE: ${{ secrets.FOD_RELEASE_ID }}
           PACKAGE_EXTRA_OPTS: -bt mvn
           DO_WAIT: true
           DO_JOB_SUMMARY: true
           DO_EXPORT: true
           DO_PR_COMMENT: ${{ github.event_name == 'pull_request' }}
+
+  fortify-aviator-remediation:
+    needs: [resolve-pr-context, fortify-fod]
+    if: needs.resolve-pr-context.outputs.has_pr_context == 'true' && needs.resolve-pr-context.outputs.is_same_repo_pr == 'true' && needs.fortify-fod.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      FOD_BASE_URL: ${{ vars.FOD_BASE_URL || 'https://api.ams.fortify.com' }}
+      FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
+      FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
+      FOD_TENANT: ${{ secrets.FOD_TENANT }}
+      FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
+      FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      PR_NUMBER: ${{ needs.resolve-pr-context.outputs.pr_number }}
+      GITHUB_BASE_REF: ${{ needs.resolve-pr-context.outputs.base_ref }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-pr-context.outputs.head_sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r fortify_aviator_remediation/requirements.txt
+
+      - name: Run Fortify Aviator remediation engine
+        run: python fortify_aviator_remediation/app/remediation_engine.py
