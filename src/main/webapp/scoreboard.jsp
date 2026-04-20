@@ -207,7 +207,7 @@
 										// this id does exist
 										//update user elements in the list item.
 										$('#userbar-'+ o[i].id).prop('title', o[i].userTitle);
-										$('#userscore-'+o[i].id).html(o[i].score);
+										$('#userscore-'+o[i].id).text(o[i].score); <%-- L210 --%>
 										$('#userplace-'+o[i].id).html('<h3 style="display:none;" id="user-' + o[i].id + '">' + o[i].order + '</h3>' + getGetOrdinal(o[i].place) + ': ');
 										$('#goldMedals-' + o[i].id).html('<div style="' + o[i].goldDisplay + '"><div class="goldMedalAmountBubble">' + o[i].goldMedalCount + '</div></div></div>');
 										$('#silverMedals-' + o[i].id).html('<div style="' + o[i].silverDisplay + '"><div class="silverMedalAmountBubble">' + o[i].silverMedalCount + '</div></div></div>');
