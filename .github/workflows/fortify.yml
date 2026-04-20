@@ -116,8 +116,6 @@ jobs:
 
       - name: Run Fortify on Demand scan
         uses: fortify/github-action@v3
-        with:
-          sast-scan: true
         env:
           FOD_URL: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
           FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
