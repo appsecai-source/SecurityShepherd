@@ -125,7 +125,7 @@ jobs:
           FOD_TENANT: ${{ secrets.FOD_TENANT }}
           # Numeric FoD release identifier; release must already exist and be configured.
           FOD_RELEASE: ${{ secrets.FOD_RELEASE_ID }}
-          PACKAGE_EXTRA_OPTS: -bt mvn -oss
+          PACKAGE_EXTRA_OPTS: -bt mvn
           DO_WAIT: true
           DO_JOB_SUMMARY: false
           DO_EXPORT: false
