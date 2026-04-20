@@ -140,10 +140,13 @@ jobs:
       contents: write
       pull-requests: write
     env:
-      FOD_BASE_URL: ${{ vars.FOD_BASE_URL || 'https://api.ams.fortify.com' }}
+      FOD_BASE_URL: ${{ vars.FOD_BASE_URL || 'https://ams.fortify.com' }}
       FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
       FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
       FOD_TENANT: ${{ secrets.FOD_TENANT }}
+      FOD_USER: ${{ secrets.FOD_USER }}
+      FOD_PASSWORD: ${{ secrets.FOD_PASSWORD || secrets.FOD_PAT }}
+      FOD_OAUTH_SCOPE: ${{ vars.FOD_OAUTH_SCOPE || 'api-tenant' }}
       FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
       FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
       GITHUB_TOKEN: ${{ github.token }}
