@@ -160,8 +160,10 @@ jobs:
           FOD_RELEASE: ${{ secrets.FOD_RELEASE_ID }}
           PACKAGE_EXTRA_OPTS: -bt mvn
           DO_WAIT: true
-          #DO_JOB_SUMMARY: false
-          #DO_EXPORT: false
+          DO_JOB_SUMMARY: ${{ vars.FOD_DO_JOB_SUMMARY || 'false' }}
+          # Disable GitHub Code Scanning export by default; it can add noticeable time
+          # when processing large finding sets and is not required for Aviator remediation.
+          DO_EXPORT: ${{ vars.FOD_DO_EXPORT || 'false' }}
           DO_DEBRICKED: true
           DO_PR_COMMENT: ${{ github.event_name == 'pull_request' }}
 
