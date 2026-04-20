@@ -2,7 +2,7 @@ name: Fortify FoD Scan and Aviator Remediation
 
 on:
   push:
-    branches: [master, dev]
+    branches: [main, dev]
     paths-ignore:
       - '**.md'
       - '.github/ISSUE_TEMPLATE'
@@ -12,7 +12,7 @@ on:
       - 'LICENSE'
       - 'Vagrantfile'
   pull_request:
-    branches: [master, dev]
+    branches: [main, dev]
     types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '**.md'
@@ -48,47 +48,82 @@ jobs:
       run_remediation: ${{ steps.resolve.outputs.run_remediation }}
     steps:
       - id: resolve
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const repoFullName = `${context.repo.owner}/${context.repo.repo}`;
-            const defaultBranch = context.payload.repository.default_branch;
-            const manualBranch = context.eventName === 'workflow_dispatch'
-              ? (context.payload.inputs?.branch || '').trim()
-              : '';
+        name: Resolve PR context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_API_URL: ${{ github.api_url }}
+          WORKFLOW_DISPATCH_BRANCH: ${{ github.event.inputs.branch || '' }}
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
 
-            let pr = null;
-            let checkoutRef = context.sha;
-            let baseRef = context.ref.startsWith('refs/heads/')
-              ? context.ref.replace('refs/heads/', '')
-              : defaultBranch;
+          with open(os.environ["GITHUB_EVENT_PATH"], "r", encoding="utf-8") as fh:
+              payload = json.load(fh)
 
-            if (context.eventName === 'pull_request') {
-              pr = context.payload.pull_request;
-              checkoutRef = pr.head.sha;
-              baseRef = pr.base.ref;
-            } else if (context.eventName === 'workflow_dispatch') {
-              const branch = manualBranch || (context.ref.startsWith('refs/heads/')
-                ? context.ref.replace('refs/heads/', '')
-                : defaultBranch);
-              const { data } = await github.rest.repos.getBranch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                branch,
-              });
-              checkoutRef = data.commit.sha;
-              baseRef = branch;
-            }
+          repo_full_name = os.environ["GITHUB_REPOSITORY"]
+          owner, repo = repo_full_name.split("/", 1)
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          github_ref = os.environ.get("GITHUB_REF", "")
+          checkout_ref = os.environ.get("GITHUB_SHA", "")
+          default_branch = payload.get("repository", {}).get("default_branch") or "main"
+          manual_branch = os.environ.get("WORKFLOW_DISPATCH_BRANCH", "").strip()
+          pr = None
 
-            core.setOutput('has_pr_context', pr ? 'true' : 'false');
-            core.setOutput('pr_number', pr ? String(pr.number) : '');
-            core.setOutput('checkout_ref', checkoutRef);
-            core.setOutput('base_ref', baseRef);
-            core.setOutput('run_remediation', baseRef ? 'true' : 'false');
-            core.setOutput(
-              'is_same_repo_pr',
-              pr ? String(pr.head.repo.full_name === repoFullName) : 'true'
-            );
+          if github_ref.startswith("refs/heads/"):
+              base_ref = github_ref[len("refs/heads/"):]
+          else:
+              base_ref = default_branch
+
+          def github_get(path: str) -> dict:
+              request = urllib.request.Request(
+                  f"{os.environ['GH_API_URL'].rstrip('/')}{path}",
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(request) as response:
+                      return json.load(response)
+              except urllib.error.HTTPError as exc:
+                  details = exc.read().decode("utf-8", errors="replace")
+                  print(f"Failed to query GitHub API at {path}: {details}", file=sys.stderr)
+                  raise
+
+          if event_name == "pull_request":
+              pr = payload.get("pull_request")
+              if pr:
+                  checkout_ref = pr["head"]["sha"]
+                  base_ref = pr["base"]["ref"]
+          elif event_name == "workflow_dispatch":
+              branch = manual_branch or base_ref
+              encoded_branch = urllib.parse.quote(branch, safe="")
+              branch_data = github_get(f"/repos/{owner}/{repo}/branches/{encoded_branch}")
+              checkout_ref = branch_data["commit"]["sha"]
+              base_ref = branch
+
+          has_pr_context = pr is not None
+          outputs = {
+              "has_pr_context": str(has_pr_context).lower(),
+              "pr_number": str(pr["number"]) if has_pr_context else "",
+              "checkout_ref": checkout_ref,
+              "base_ref": base_ref,
+              "run_remediation": str(bool(base_ref)).lower(),
+              "is_same_repo_pr": str(
+                  pr["head"]["repo"]["full_name"] == repo_full_name if has_pr_context else True
+              ).lower(),
+          }
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              for key, value in outputs.items():
+                  fh.write(f"{key}={value}\n")
+          PY
 
   fortify-fod:
     needs: resolve-pr-context
