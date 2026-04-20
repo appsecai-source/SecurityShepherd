@@ -236,7 +236,7 @@
 						var fullResponse = new String(ajaxCall.responseText);
 						if (fullResponse.startsWith("ERROR:")) {
 							console.log ('Response contained error: ' + fullResponse);
-							$("#badData").html('<center>' + fullResponse + '</center>');
+							$("#badData").text(fullResponse); <%-- L239 --%>
 							$("#badData").show("slow");
 							//Scoreboard will not refresh after this
 							console.log("Scoreboard will not refresh following this error");
