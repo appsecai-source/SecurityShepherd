@@ -115,7 +115,7 @@ jobs:
           cache: maven
 
       - name: Run Fortify on Demand scan
-        uses: fortify/github-action@v2
+        uses: fortify/github-action@v3
         with:
           sast-scan: true
         env:
