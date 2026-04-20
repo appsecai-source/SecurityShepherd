@@ -148,6 +148,7 @@ jobs:
       FOD_PASSWORD: ${{ secrets.FOD_PASSWORD || secrets.FOD_PAT }}
       FOD_OAUTH_SCOPE: ${{ vars.FOD_OAUTH_SCOPE || 'api-tenant' }}
       FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
+      FOD_SEVERITY_STRINGS: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical,High' }}
       FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
       GITHUB_TOKEN: ${{ github.token }}
       GITHUB_REPOSITORY: ${{ github.repository }}
