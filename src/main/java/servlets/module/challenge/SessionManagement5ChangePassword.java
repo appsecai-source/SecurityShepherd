@@ -126,7 +126,7 @@ public class SessionManagement5ChangePassword extends HttpServlet {
             log.debug("Token life = " + tokenLife);
           } catch (ParseException e) {
             log.error("Date Parsing Error: " + e.toString());
-            errorMessage += bundle.getString("changePass.badTokenData") + ": " + e.toString();
+            errorMessage += bundle.getString("changePass.badTokenData");
           }
 
           if (tokenLife < 10 && tokenLife >= 0) {
