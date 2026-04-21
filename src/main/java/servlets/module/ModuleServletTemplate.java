@@ -149,18 +149,18 @@ public class ModuleServletTemplate extends HttpServlet {
       // which can access it.
       // The details of this user need to be entered in a properties file in WEB-INF/challenges
       // The Name of that user need to be entered in the following funciton;
-      Connection conn =
+      try (Connection conn =
           Database.getChallengeConnection(applicationRoot, "nameOfPropertiesFile.properties");
-      Statement stmt;
-      stmt = conn.createStatement();
-      ResultSet resultSet =
-          stmt.executeQuery("SELECT * FROM tb_users WHERE username = '" + username + "'");
-      log.debug("Opening Result Set from query");
-      for (int i = 0; resultSet.next(); i++) {
-        log.debug("Row " + i + ": User ID = " + resultSet.getString(1));
-        result = Encode.forHtml(resultSet.getString(1));
+          Statement stmt = conn.createStatement();
+          ResultSet resultSet =
+              stmt.executeQuery("SELECT * FROM tb_users WHERE username = '" + username + "'")) {
+        log.debug("Opening Result Set from query");
+        for (int i = 0; resultSet.next(); i++) {
+          log.debug("Row " + i + ": User ID = " + resultSet.getString(1));
+          result = Encode.forHtml(resultSet.getString(1));
+        }
+        log.debug("That's All");
       }
-      log.debug("That's All");
     } catch (SQLException e) {
       log.debug("SQL Error caught - " + e.toString());
       result =
@@ -174,5 +174,6 @@ public class ModuleServletTemplate extends HttpServlet {
               + Encode.forHtml(e.toString())); // Html Encode Error to prevent XSS
     }
     return result;
+
   }
 }

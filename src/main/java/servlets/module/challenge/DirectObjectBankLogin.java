@@ -82,40 +82,61 @@ public class DirectObjectBankLogin extends HttpServlet {
         log.debug("Account Pass - " + accountPass);
         String applicationRoot = getServletContext().getRealPath("");
         String htmlOutput = new String();
+        Connection conn = null;
+        CallableStatement callstmt = null;
+        ResultSet resultSet = null;
 
-        Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
-        CallableStatement callstmt = conn.prepareCall("CALL bankAuth(?, ?)");
-        callstmt.setString(1, accountHolder);
-        callstmt.setString(2, accountPass);
-        ResultSet resultSet = callstmt.executeQuery();
-        if (resultSet.next()) {
-          String accountNumber = resultSet.getString(1);
-          log.debug("Found Account Number: " + accountNumber);
-          ses.setAttribute("directObjectBankAccount", accountNumber);
-          htmlOutput += bankForm(accountNumber, applicationRoot, ses, bundle, errors);
-        } else {
-          log.debug("Authentication Failed");
+        try {
+          conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
+          callstmt = conn.prepareCall("CALL bankAuth(?, ?)");
+          callstmt.setString(1, accountHolder);
+          callstmt.setString(2, accountPass);
+          resultSet = callstmt.executeQuery();
+          if (resultSet.next()) {
+            String accountNumber = resultSet.getString(1);
+            log.debug("Found Account Number: " + accountNumber);
+            ses.setAttribute("directObjectBankAccount", accountNumber);
+            htmlOutput += bankForm(accountNumber, applicationRoot, ses, bundle, errors);
+          } else {
+            log.debug("Authentication Failed");
 
-          htmlOutput =
-              bundle.getString("login.authFailedMessage.1")
-                  + " '"
-                  + Encode.forHtml(accountHolder)
-                  + "' "
-                  + bundle.getString("login.authFailedMessage.2");
+            htmlOutput =
+                bundle.getString("login.authFailedMessage.1")
+                    + " '"
+                    + Encode.forHtml(accountHolder)
+                    + "' "
+                    + bundle.getString("login.authFailedMessage.2");
+          }
+          log.debug("Outputting HTML");
+          out.write(htmlOutput);
+        } catch (SQLException e) {
+          out.write(
+              errors.getString("error.funky")
+                  + " "
+                  + bundle.getString("login.error.couldNotGetBalance"));
+          log.fatal(levelName + " SQL Error - " + e.toString());
+        } catch (Exception e) {
+          out.write(errors.getString("error.funky"));
+          log.fatal(levelName + " - " + e.toString());
+        } finally {
+          try {
+            if (resultSet != null) {
+              resultSet.close();
+            }
+          } catch (SQLException e) {
+            log.error("Error closing ResultSet: " + e.toString());
+          }
+          try {
+            if (callstmt != null) {
+              callstmt.close();
+            }
+          } catch (SQLException e) {
+            log.error("Error closing CallableStatement: " + e.toString());
+          }
+          if (conn != null) {
+            Database.closeConnection(conn);
+          }
         }
-        log.debug("Outputting HTML");
-        out.write(htmlOutput);
-        Database.closeConnection(conn);
-      } catch (SQLException e) {
-        out.write(
-            errors.getString("error.funky")
-                + " "
-                + bundle.getString("login.error.couldNotGetBalance"));
-        log.fatal(levelName + " SQL Error - " + e.toString());
-      } catch (Exception e) {
-        out.write(errors.getString("error.funky"));
-        log.fatal(levelName + " - " + e.toString());
-      }
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
@@ -315,14 +336,20 @@ public class DirectObjectBankLogin extends HttpServlet {
    * @param applicationRoot Running Context of the application
    * @return Returns a Float Value representing the balance
    * @throws SQLException If no rows found or if SQL error occurs
+  /**
+   * Method to get the account balance from the DirectObjectBank for a specific account
+   *
+   * @param accountNumber The Account Number to Check the Balance Of
+   * @param applicationRoot Running Context of the application
+   * @return Returns a Float Value representing the balance
+   * @throws SQLException If no rows found or if SQL error occurs
    */
   public static long getAccountBalance(String accountNumber, String applicationRoot)
       throws SQLException {
     Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
-    CallableStatement callstmt;
+    CallableStatement callstmt = null;
     long toReturn = 0;
     try {
-
       callstmt = conn.prepareCall("CALL currentFunds(?)");
       callstmt.setString(1, accountNumber);
       ResultSet rs = callstmt.executeQuery();
@@ -331,10 +358,12 @@ public class DirectObjectBankLogin extends HttpServlet {
       } else {
         throw new SQLException("Could not Get Funds. No Rows Found From Query");
       }
-    } catch (SQLException e) {
-      throw e;
+    } finally {
+      if (conn != null) {
+        conn.close();
+      }
     }
-    conn.close();
     return toReturn;
   }
+
 }

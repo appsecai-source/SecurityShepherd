@@ -96,82 +96,116 @@ public class SessionManagement5 extends HttpServlet {
         log.debug("Getting ApplicationRoot");
         String ApplicationRoot = getServletContext().getRealPath("");
         log.debug("Servlet root = " + ApplicationRoot);
+        Connection conn = null;
+        PreparedStatement callstmt = null;
+        ResultSet resultSet = null;
+        ResultSet resultSet2 = null;
+        
+        try {
+          conn = Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalFive");
+          log.debug("Checking credentials");
 
-        Connection conn =
-            Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalFive");
-        log.debug("Checking credentials");
-        PreparedStatement callstmt;
+          log.debug("Committing changes made to database");
+          callstmt = conn.prepareStatement("COMMIT");
+          callstmt.execute();
+          log.debug("Changes committed.");
 
-        log.debug("Committing changes made to database");
-        callstmt = conn.prepareStatement("COMMIT");
-        callstmt.execute();
-        log.debug("Changes committed.");
+          callstmt = conn.prepareStatement("SELECT userName, userRole FROM users WHERE userName = ?");
+          callstmt.setString(1, subName);
+          log.debug("Executing findUser");
+          resultSet = callstmt.executeQuery();
+          // Is the username valid?
+          if (resultSet.next()) {
+            log.debug("User found");
+            // Is the user an Admin?
+            if (resultSet.getString(2).equalsIgnoreCase("admin")) {
+              log.debug("Admin Detected");
+              callstmt =
+                  conn.prepareStatement(
+                      "SELECT userName, userRole FROM users WHERE userName = ? AND userPassword ="
+                          + " SHA(?)");
+              callstmt.setString(1, subName);
+              callstmt.setString(2, subPass);
+              log.debug("Executing Login Check");
+              resultSet2 = callstmt.executeQuery();
+              if (resultSet2.next()) {
+                log.debug("Successful Admin Login");
+                // Get key and add it to the output
+                String userKey =
+                    Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
 
-        callstmt = conn.prepareStatement("SELECT userName, userRole FROM users WHERE userName = ?");
-        callstmt.setString(1, subName);
-        log.debug("Executing findUser");
-        ResultSet resultSet = callstmt.executeQuery();
-        // Is the username valid?
-        if (resultSet.next()) {
-          log.debug("User found");
-          // Is the user an Admin?
-          if (resultSet.getString(2).equalsIgnoreCase("admin")) {
-            log.debug("Admin Detected");
-            callstmt =
-                conn.prepareStatement(
-                    "SELECT userName, userRole FROM users WHERE userName = ? AND userPassword ="
-                        + " SHA(?)");
-            callstmt.setString(1, subName);
-            callstmt.setString(2, subPass);
-            log.debug("Executing Login Check");
-            ResultSet resultSet2 = callstmt.executeQuery();
-            if (resultSet2.next()) {
-              log.debug("Successful Admin Login");
-              // Get key and add it to the output
-              String userKey =
-                  Hash.generateUserSolution(levelResult, (String) ses.getAttribute("userName"));
-
+                htmlOutput =
+                    "<h2 class='title'>"
+                        + bundle.getString("response.welcome")
+                        + " "
+                        + Encode.forHtml(resultSet2.getString(1))
+                        + "</h2>"
+                        + "<p>"
+                        + bundle.getString("response.resultKey")
+                        + " <a>"
+                        + userKey
+                        + "</a>"
+                        + "</p>";
+              } else {
+                userAddress =
+                    bundle.getString("response.badPass")
+                        + " <a>"
+                        + Encode.forHtml(resultSet.getString(1))
+                        + "</a><br/>";
+                htmlOutput = makeTable(userAddress, bundle);
+              }
+            } else {
+              log.debug("Successful Pleb Login");
               htmlOutput =
-                  "<h2 class='title'>"
-                      + bundle.getString("response.welcome")
-                      + " "
-                      + Encode.forHtml(resultSet2.getString(1))
+                  makeTable(bundle)
+                      + "<h2 class='title'>"
+                      + bundle.getString("response.welcomeGuest")
                       + "</h2>"
                       + "<p>"
-                      + bundle.getString("response.resultKey")
-                      + " <a>"
-                      + userKey
-                      + "</a>"
-                      + "</p>";
-            } else {
-              userAddress =
-                  bundle.getString("response.badPass")
-                      + " <a>"
-                      + Encode.forHtml(resultSet.getString(1))
-                      + "</a><br/>";
-              htmlOutput = makeTable(userAddress, bundle);
+                      + bundle.getString("response.guestMessage")
+                      + "</p><br/><br/>";
             }
           } else {
-            log.debug("Successful Pleb Login");
-            htmlOutput =
-                makeTable(bundle)
-                    + "<h2 class='title'>"
-                    + bundle.getString("response.welcomeGuest")
-                    + "</h2>"
-                    + "<p>"
-                    + bundle.getString("response.guestMessage")
-                    + "</p><br/><br/>";
+            userAddress = bundle.getString("response.badUser") + "<br/>";
+            htmlOutput = makeTable(userAddress, bundle);
           }
-        } else {
-          userAddress = bundle.getString("response.badUser") + "<br/>";
-          htmlOutput = makeTable(userAddress, bundle);
+          log.debug("Outputting HTML");
+          out.write(htmlOutput);
+        } catch (Exception e) {
+          out.write(errors.getString("error.funky"));
+          log.fatal(levelName + " - " + e.toString());
+        } finally {
+          try {
+            if (resultSet2 != null) {
+              resultSet2.close();
+            }
+          } catch (Exception e) {
+            log.error("Error closing resultSet2: " + e.toString());
+          }
+          try {
+            if (resultSet != null) {
+              resultSet.close();
+            }
+          } catch (Exception e) {
+            log.error("Error closing resultSet: " + e.toString());
+          }
+          try {
+            if (callstmt != null) {
+              callstmt.close();
+            }
+          } catch (Exception e) {
+            log.error("Error closing callstmt: " + e.toString());
+          }
+          try {
+            if (conn != null) {
+              Database.closeConnection(conn);
+            }
+          } catch (Exception e) {
+            log.error("Error closing connection: " + e.toString());
+          }
         }
-        Database.closeConnection(conn);
-        log.debug("Outputting HTML");
-        out.write(htmlOutput);
-      } catch (Exception e) {
-        out.write(errors.getString("error.funky"));
-        log.fatal(levelName + " - " + e.toString());
+      } else {
+        log.error(levelName + " servlet accessed with no session");
       }
     } else {
       log.error(levelName + " servlet accessed with no session");
