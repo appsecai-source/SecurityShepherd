@@ -2280,13 +2280,13 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param userName The username of the user
    * @return The class id of the submitted user name
-   */
   public static String getUserClassFromName(String ApplicationRoot, String userName) {
     log.debug("*** Getter.getUserClass ***");
     String result = new String();
     userName = userName.toLowerCase();
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       CallableStatement callstmt = conn.prepareCall("call userClassId(?)");
       log.debug("Gathering userClassId ResultSet");
@@ -2296,15 +2296,19 @@ public class Getter {
       resultSet.next();
       result = resultSet.getString(1);
       log.debug("Found " + result);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute userClassId: " + e.toString());
       result = new String();
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getUserClass ***");
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
