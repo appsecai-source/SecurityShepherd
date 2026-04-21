@@ -76,7 +76,7 @@ public class UrlAccess3UserList extends HttpServlet {
         for (i = 0; i < userCookies.length; i++) {
           if (userCookies[i].getName().compareTo("currentPerson") == 0) {
             theCookie = userCookies[i];
-            break; // End Loop, because we found the token
+            break;
           }
         }
         String currentUser = new String("aGuest");
@@ -88,20 +88,19 @@ public class UrlAccess3UserList extends HttpServlet {
           currentUser = decodedCookie;
         }
         String ApplicationRoot = getServletContext().getRealPath("");
-        Connection conn = Database.getChallengeConnection(ApplicationRoot, "UrlAccessThree");
-        PreparedStatement callstmt;
-        callstmt =
-            conn.prepareStatement(
-                "SELECT userName FROM users WHERE userRole = \"admin\" OR userName = \""
-                    + currentUser
+        try (Connection conn = Database.getChallengeConnection(ApplicationRoot, "UrlAccessThree");
+             PreparedStatement callstmt = conn.prepareStatement(
+                "SELECT userName FROM users WHERE userRole = \"admin\" OR userName = \"" 
+                    + currentUser 
                     + "\";");
-        log.debug("Getting User List");
-        htmlOutput = new String();
-        ResultSet rs = callstmt.executeQuery();
-        while (rs.next()) {
-          htmlOutput += Encode.forHtml(rs.getString(1)) + "<br>";
-          if (rs.getString(1).equalsIgnoreCase("MrJohnReillyTheSecond")) {
-            log.debug("Super Admin contained in response");
+             ResultSet rs = callstmt.executeQuery()) {
+          log.debug("Getting User List");
+          htmlOutput = new String();
+          while (rs.next()) {
+            htmlOutput += Encode.forHtml(rs.getString(1)) + "<br>";
+            if (rs.getString(1).equalsIgnoreCase("MrJohnReillyTheSecond")) {
+              log.debug("Super Admin contained in response");
+            }
           }
         }
       } catch (Exception e) {
