@@ -1364,7 +1364,6 @@ public class Setter {
     log.debug("*** END setScoreboardStatus ***");
     return result;
   }
-
   public static boolean setScoreboardClass(String ApplicationRoot, String theScoreboardClass)
       throws SQLException {
     boolean result = false;
@@ -1373,22 +1372,26 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting scoreboard class setting");
-    PreparedStatement scoreboardClassSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    scoreboardClassSetting.setString(1, theScoreboardClass);
-    scoreboardClassSetting.setString(2, "scoreboardClass");
+    try {
+      log.debug("Setting scoreboard class setting");
+      PreparedStatement scoreboardClassSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      scoreboardClassSetting.setString(1, theScoreboardClass);
+      scoreboardClassSetting.setString(2, "scoreboardClass");
 
-    if (scoreboardClassSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set scoreboard class to " + theScoreboardClass);
+      if (scoreboardClassSetting.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set scoreboard class to " + theScoreboardClass);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setScoreboardClass ***");
     return result;
   }
+
 
   public static boolean setStartTimeStatus(String ApplicationRoot, boolean theStartTimeStatus)
       throws SQLException {
