@@ -308,23 +308,23 @@ public class Setter {
     try {
       // Update Database Settings
       File siteProperties = new File(applicationRoot + "/WEB-INF/database.properties");
-      DataOutputStream writer = new DataOutputStream(new FileOutputStream(siteProperties, false));
-      String theProperties =
-          new String("databaseConnectionURL=" + url + "\nDriverType=org.mariadb.jdbc.Driver");
-      writer.write(theProperties.getBytes());
-      writer.close();
+      try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(siteProperties, false))) {
+        String theProperties =
+            new String("databaseConnectionURL=" + url + "\nDriverType=org.mariadb.jdbc.Driver");
+        writer.write(theProperties.getBytes());
+      }
       // Update Core Schema Settings
       siteProperties = new File(applicationRoot + "/WEB-INF/coreDatabase.properties");
-      writer = new DataOutputStream(new FileOutputStream(siteProperties, false));
-      theProperties =
-          new String(
-              "databaseConnectionURL=core"
-                  + "\ndatabaseUsername="
-                  + userName
-                  + "\ndatabasePassword="
-                  + password);
-      writer.write(theProperties.getBytes());
-      writer.close();
+      try (DataOutputStream writer = new DataOutputStream(new FileOutputStream(siteProperties, false))) {
+        String theProperties =
+            new String(
+                "databaseConnectionURL=core"
+                    + "\ndatabaseUsername="
+                    + userName
+                    + "\ndatabasePassword="
+                    + password);
+        writer.write(theProperties.getBytes());
+      }
       return true;
     } catch (IOException e) {
       log.error("Could not update Core Database Info: " + e.toString());
