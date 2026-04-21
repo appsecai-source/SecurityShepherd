@@ -2410,27 +2410,46 @@ public class Getter {
   public static boolean isModuleOpen(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.isModuleOpen ***");
     boolean result = false;
+    Connection conn = null;
+    PreparedStatement prepStmt = null;
+    ResultSet rs = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       // Get the modules
-      PreparedStatement prepStmt =
+      prepStmt =
           conn.prepareStatement("SELECT moduleStatus FROM modules WHERE moduleId = ?");
       prepStmt.setString(1, moduleId);
-      ResultSet rs = prepStmt.executeQuery();
+      rs = prepStmt.executeQuery();
       if (rs.next()) {
         if (rs.getString(1).equalsIgnoreCase("open")) {
           result = true;
         }
       }
-      rs.close();
-      Database.closeConnection(conn);
-
     } catch (Exception e) {
       log.error("isModuleOpen Error: " + e.toString());
+    } finally {
+      try {
+        if (rs != null) {
+          rs.close();
+        }
+      } catch (Exception e) {
+        log.error("Error closing ResultSet: " + e.toString());
+      }
+      try {
+        if (prepStmt != null) {
+          prepStmt.close();
+        }
+      } catch (Exception e) {
+        log.error("Error closing PreparedStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
