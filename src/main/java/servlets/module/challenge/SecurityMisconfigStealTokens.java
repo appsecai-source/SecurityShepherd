@@ -160,9 +160,9 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
   public static String getUserToken(String userId, String applicationRoot) throws SQLException {
     String userToken = new String();
     log.debug("Getting user token with id: " + userId);
-    Connection conn =
-        Database.getChallengeConnection(applicationRoot, "SecurityMisconfigStealToken");
+    Connection conn = null;
     try {
+      conn = Database.getChallengeConnection(applicationRoot, "SecurityMisconfigStealToken");
       CallableStatement getTokenCs = conn.prepareCall("call getToken(?)");
       getTokenCs.setString(1, userId);
       log.debug("Executing getToken procedure...");
@@ -177,8 +177,11 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
     } catch (SQLException e) {
       log.error("Could not get user SecurityMisconfigStealToken token: " + e.toString());
       throw e;
+    } finally {
+      if (conn != null) {
+        conn.close();
+      }
     }
-    conn.close();
     if (!userToken.isEmpty()) {
       log.debug("Found token: " + userToken);
     }
@@ -200,9 +203,9 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
       throws SQLException {
     boolean validToken = false;
     log.debug("Checking token:" + token);
-    Connection conn =
-        Database.getChallengeConnection(applicationRoot, "SecurityMisconfigStealToken");
+    Connection conn = null;
     try {
+      conn = Database.getChallengeConnection(applicationRoot, "SecurityMisconfigStealToken");
       CallableStatement validateTokenCs = conn.prepareCall("call validToken(?, ?)");
       validateTokenCs.setString(1, userId);
       validateTokenCs.setString(2, token);
@@ -221,8 +224,11 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
     } catch (SQLException e) {
       log.error("Could not verify token: " + e.toString());
       throw e;
+    } finally {
+      if (conn != null) {
+        conn.close();
+      }
     }
-    conn.close();
     return validToken;
   }
 }
