@@ -2667,26 +2667,32 @@ public class Getter {
     Boolean theStartTimeStatus = null;
     log.debug("*** Getter.getStartTimeStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting start time setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting start time setting");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "hasStartTime");
+      callstmt.setString(1, "hasStartTime");
 
-    ResultSet timestampResult = callstmt.executeQuery();
+      ResultSet timestampResult = callstmt.executeQuery();
 
-    timestampResult.next();
+      timestampResult.next();
 
-    theStartTimeStatus = timestampResult.getBoolean(1);
+      theStartTimeStatus = timestampResult.getBoolean(1);
 
-    log.debug("Value found: " + theStartTimeStatus);
-
-    Database.closeConnection(conn);
+      log.debug("Value found: " + theStartTimeStatus);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
     log.debug("*** END getStartTimeStatus ***");
     return theStartTimeStatus;
   }
+
 
   public static LocalDateTime getStartTime(String ApplicationRoot) throws SQLException {
     LocalDateTime theStartTimeStatus = null;
