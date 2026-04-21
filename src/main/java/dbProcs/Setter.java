@@ -807,23 +807,24 @@ public class Setter {
     log.debug("*** Setter.updatePlayerClass ***");
 
     String result = null;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call playerUpdateClass(?, ?)")) {
 
       log.debug("Preparing playerUpdateClass call");
-      CallableStatement callstmnt = conn.prepareCall("call playerUpdateClass(?, ?)");
       callstmnt.setString(1, playerId);
       callstmnt.setString(2, classId);
       log.debug("Executing playerUpdateClass");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("playerUpdateClass Failure: " + e.toString());
       result = null;
     }
+
     log.debug("*** END updatePlayerClass ***");
     return result;
   }
