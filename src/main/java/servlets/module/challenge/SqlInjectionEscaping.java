@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.owasp.encoder.Encode;
 import utils.ShepherdLogManager;
 import utils.Validate;
+import java.sql.PreparedStatement;
 
 /**
  * SQL Injection Escape Challenge - Does not use User specific keys <br>
@@ -76,16 +77,15 @@ public class SqlInjectionEscaping extends HttpServlet {
       try {
         String aUserId = request.getParameter("aUserId");
         log.debug("User Submitted - " + aUserId);
-        aUserId = aUserId.replaceAll("'", "\\\\'"); // Replace ' with \'
-        log.debug("Escaped to - " + aUserId);
+        log.debug("Using prepared statement for safe query execution");
         String ApplicationRoot = getServletContext().getRealPath("");
 
         log.debug("Getting Connection to Database");
         Connection conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeEscape");
-        Statement stmt = conn.createStatement();
         log.debug("Gathering result set");
-        ResultSet resultSet =
-            stmt.executeQuery("SELECT * FROM customers WHERE customerId = '" + aUserId + "'");
+        PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM customers WHERE customerId = ?");
+        pstmt.setString(1, aUserId);
+        ResultSet resultSet = pstmt.executeQuery();
 
         int i = 0;
         htmlOutput = "<h2 class='title'>" + bundle.getString("response.searchResults") + "</h2>";
