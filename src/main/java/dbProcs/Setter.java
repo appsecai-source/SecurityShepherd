@@ -1345,22 +1345,23 @@ public class Setter {
         && theScoreboardStatus != "public") {
       throw new IllegalArgumentException("Invalid scoreboard status: " + theScoreboardStatus);
     }
-
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting scoreboard status setting");
-    PreparedStatement scoreboardSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    scoreboardSetting.setString(1, theScoreboardStatus);
-    scoreboardSetting.setString(2, "scoreboardStatus");
+    try {
+      log.debug("Setting scoreboard status setting");
+      PreparedStatement scoreboardSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      scoreboardSetting.setString(1, theScoreboardStatus);
+      scoreboardSetting.setString(2, "scoreboardStatus");
 
-    if (scoreboardSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set scoreboard status to " + theScoreboardStatus);
+      if (scoreboardSetting.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set scoreboard status to " + theScoreboardStatus);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
-
-    Database.closeConnection(conn);
     log.debug("*** END setScoreboardStatus ***");
     return result;
   }
