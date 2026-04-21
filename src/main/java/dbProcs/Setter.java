@@ -913,15 +913,16 @@ public class Setter {
         callstmnt.setBoolean(6, isOpen); // Only give points if CTF is open
         callstmnt.setString(7, extra);
         log.debug("Executing userUpdateResult");
-        callstmnt.execute();
-        // User Executed. Now Get the Level Name Langauge Key
-        result = Getter.getModuleNameLocaleKey(ApplicationRoot, moduleId);
+        try {
+          callstmnt.execute();
+          // User Executed. Now Get the Level Name Langauge Key
+          result = Getter.getModuleNameLocaleKey(ApplicationRoot, moduleId);
+        } finally {
+          callstmnt.close();
+        }
         Database.closeConnection(conn);
 
       } catch (SQLException e) {
-        log.error("userUpdateResult Failure: " + e.toString());
-        result = null;
-      }
     } else {
       log.error("Error: Can't allow results to be stored when CTF isn't running");
       result = null;
