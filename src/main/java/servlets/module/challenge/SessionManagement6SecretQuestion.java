@@ -91,18 +91,22 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
         log.debug("subAnswer = " + subAns);
 
         String ApplicationRoot = getServletContext().getRealPath("");
+        String ApplicationRoot = getServletContext().getRealPath("");
+        Connection conn = null;
+        PreparedStatement callstmt = null;
+        ResultSet rs = null;
         try {
           if (Validate.isValidEmailAddress(subEmail) && subAns.length() > 5) {
-            Connection conn =
+            conn =
                 Database.getChallengeConnection(ApplicationRoot, "BrokenAuthAndSessMangChalSix");
             log.debug("Checking Secret Answer");
-            PreparedStatement callstmt =
+            callstmt =
                 conn.prepareStatement(
                     "SELECT userName FROM users WHERE userAddress = ? AND secretAnswer = ?");
             callstmt.setString(1, subEmail);
             callstmt.setString(2, subAns);
             log.debug("Running secret Answer Check");
-            ResultSet rs = callstmt.executeQuery();
+            rs = callstmt.executeQuery();
             if (rs.next()) {
               log.debug("Correct Answer Submitted");
               // Get key and add it to the output
@@ -131,7 +135,6 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
                           + "</h2><p>"
                           + bundle.getString("question.whoAreYou"));
             }
-            Database.closeConnection(conn);
           } else {
             log.debug("Invalid data submitted");
             htmlOutput = new String("<b>" + bundle.getString("question.invalidData") + ": </b>");
@@ -143,6 +146,24 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
           }
         } catch (SQLException e) {
           log.error(levelName + " SQL Error: " + e.toString());
+        } finally {
+          try {
+            if (rs != null) {
+              rs.close();
+            }
+          } catch (SQLException e) {
+            log.error("Error closing ResultSet: " + e.toString());
+          }
+          try {
+            if (callstmt != null) {
+              callstmt.close();
+            }
+          } catch (SQLException e) {
+            log.error("Error closing PreparedStatement: " + e.toString());
+          }
+          if (conn != null) {
+            Database.closeConnection(conn);
+          }
         }
         log.debug("Outputting HTML");
         out.write(htmlOutput);
