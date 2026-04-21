@@ -220,28 +220,32 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
                             + ": </b>"
                             + bundle.getString("question.invalidEmail"));
               } else {
-                Connection conn =
+                try (Connection conn =
                     Database.getChallengeConnection(
                         ApplicationRoot, "BrokenAuthAndSessMangChalSix");
-                log.debug("Getting Secret Question");
-                PreparedStatement callstmt =
-                    conn.prepareStatement(
-                        "SELECT secretQuestion FROM users WHERE userAddress = \""
-                            + subEmail
-                            + "\"");
-                ResultSet rs = callstmt.executeQuery();
-                if (rs.next()) {
-                  log.debug("'Valid' User Detected");
-                  log.debug("Encoding for output: " + rs.getString(1));
-                  // rs.getString(1) contains the question for the user to answer. This question is
-                  // asked in English as it must be answered in English to successfully pass the
-                  // level
-                  htmlOutput = new String(Encode.forHtml(rs.getString(1)));
-                } else {
-                  log.debug("No question found for user");
-                  htmlOutput = bundle.getString("question.noQuestion");
+                    PreparedStatement callstmt =
+                        conn.prepareStatement(
+                            "SELECT secretQuestion FROM users WHERE userAddress = \""
+                                + subEmail
+                                + "\"");
+                    ResultSet rs = callstmt.executeQuery()) {
+                  log.debug("Getting Secret Question");
+                  if (rs.next()) {
+                    log.debug("'Valid' User Detected");
+                    log.debug("Encoding for output: " + rs.getString(1));
+                    // rs.getString(1) contains the question for the user to answer. This question is
+                    // asked in English as it must be answered in English to successfully pass the
+                    // level
+                    htmlOutput = new String(Encode.forHtml(rs.getString(1)));
+                  } else {
+                    log.debug("No question found for user");
+                    htmlOutput = bundle.getString("question.noQuestion");
+                  }
+                } catch (SQLException e) {
+                  log.debug(levelName + " SQL Error: " + e.toString());
+                  log.debug("Outputting error to user");
+                  htmlOutput = new String(e.toString());
                 }
-                Database.closeConnection(conn);
               }
             } catch (SQLException e) {
               log.debug(levelName + " SQL Error: " + e.toString());
