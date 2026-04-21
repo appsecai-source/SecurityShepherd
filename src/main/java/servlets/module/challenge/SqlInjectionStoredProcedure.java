@@ -75,50 +75,49 @@ public class SqlInjectionStoredProcedure extends HttpServlet {
         String ApplicationRoot = getServletContext().getRealPath("");
 
         log.debug("Getting Connection to Database");
-        Connection conn =
-            Database.getChallengeConnection(ApplicationRoot, "SqlChallengeStoredProc");
-        // CallableStatement callstmt = conn.prepareCall("CALL findUser('" + userIdentity + "');");
-        Statement stmt = conn.createStatement();
-        ResultSet resultSet = stmt.executeQuery("CALL findUser('" + userIdentity + "');");
+        
+        try (Connection conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeStoredProc");
+             Statement stmt = conn.createStatement();
+             ResultSet resultSet = stmt.executeQuery("CALL findUser('" + userIdentity + "');")) {
 
-        int i = 0;
-        htmlOutput = "<h2 class='title'>" + bundle.getString("response.searchResults") + "</h2>";
-        htmlOutput +=
-            "<table><tr><th>"
-                + bundle.getString("response.table.name")
-                + "</th><th>"
-                + bundle.getString("response.table.address")
-                + "</th><th>"
-                + bundle.getString("response.table.comment")
-                + "</th></tr>";
-
-        log.debug("Opening Result Set from query");
-        while (resultSet.next()) {
-          log.debug("Adding Customer " + resultSet.getString(2));
+          int i = 0;
+          htmlOutput = "<h2 class='title'>" + bundle.getString("response.searchResults") + "</h2>";
           htmlOutput +=
-              "<tr><td>"
-                  + Encode.forHtml(resultSet.getString(2))
-                  + "</td><td>"
-                  + Encode.forHtml(resultSet.getString(3))
-                  + "</td><td>"
-                  + Encode.forHtml(resultSet.getString(4))
-                  + "</td></tr>";
-          i++;
+              "<table><tr><th>"
+                  + bundle.getString("response.table.name")
+                  + "</th><th>"
+                  + bundle.getString("response.table.address")
+                  + "</th><th>"
+                  + bundle.getString("response.table.comment")
+                  + "</th></tr>";
+
+          log.debug("Opening Result Set from query");
+          while (resultSet.next()) {
+            log.debug("Adding Customer " + resultSet.getString(2));
+            htmlOutput +=
+                "<tr><td>"
+                    + Encode.forHtml(resultSet.getString(2))
+                    + "</td><td>"
+                    + Encode.forHtml(resultSet.getString(3))
+                    + "</td><td>"
+                    + Encode.forHtml(resultSet.getString(4))
+                    + "</td></tr>";
+            i++;
+          }
+          htmlOutput += "</table>";
+          if (i == 0) {
+            htmlOutput = "<p>" + bundle.getString("response.noResults") + "</p>";
+          }
+        } catch (SQLException e) {
+          log.debug("SQL Error caught - " + e.toString());
+          htmlOutput +=
+              "<p>"
+                  + errors.getString("error.detected")
+                  + "</p>"
+                  + "<p>"
+                  + Encode.forHtml(e.toString())
+                  + "</p>";
         }
-        conn.close();
-        htmlOutput += "</table>";
-        if (i == 0) {
-          htmlOutput = "<p>" + bundle.getString("response.noResults") + "</p>";
-        }
-      } catch (SQLException e) {
-        log.debug("SQL Error caught - " + e.toString());
-        htmlOutput +=
-            "<p>"
-                + errors.getString("error.detected")
-                + "</p>"
-                + "<p>"
-                + Encode.forHtml(e.toString())
-                + "</p>";
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
