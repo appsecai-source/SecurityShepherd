@@ -2465,9 +2465,9 @@ public class Getter {
   public static boolean findAdminById(String ApplicationRoot, String userId) {
     log.debug("*** Getter.findAdminById ***");
     boolean userFound = false;
-    // Get connection
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       CallableStatement callstmt = conn.prepareCall("call adminFindById(?)");
       log.debug("Gathering adminFindById ResultSet");
@@ -2478,15 +2478,19 @@ public class Getter {
       log.debug(
           "Admin Found: " + userFind.getString(1)); // This line will not execute if admin not found
       userFound = true;
-      Database.closeConnection(conn);
 
     } catch (Exception e) {
       log.error("Admin does not exist: " + e.toString());
       userFound = false;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END findAdminById ***");
     return userFound;
   }
+
 
   public static boolean getAdminCheatStatus(String ApplicationRoot) throws SQLException {
     boolean adminCheatStatus = false;
