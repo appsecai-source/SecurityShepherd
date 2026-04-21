@@ -479,18 +479,18 @@ public class Getter {
     log.debug("*** Getter.checkPlayerResult ***");
 
     String result = null;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call userCheckResult(?, ?)")) {
 
       log.debug("Preparing userCheckResult call");
-      CallableStatement callstmnt = conn.prepareCall("call userCheckResult(?, ?)");
       callstmnt.setString(1, moduleId);
       callstmnt.setString(2, userId);
       log.debug("Executing userCheckResult");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.debug("userCheckResult Failure: " + e.toString());
