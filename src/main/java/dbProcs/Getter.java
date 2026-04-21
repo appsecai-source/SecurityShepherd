@@ -1488,21 +1488,19 @@ public class Getter {
    * @param applicationRoot The current running context of the application.
    * @param moduleId The identifier of a module
    * @return The hash of the module specified
-   */
   public static String getModuleHash(String applicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleHash ***");
     String result = new String();
-    try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+    try (Connection conn = Database.getCoreConnection(applicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call moduleGetHashById(?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetHashById(?)");
       log.debug("Gathering moduleGetHash ResultSet");
       callstmt.setString(1, moduleId);
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from moduleGetHash");
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from moduleGetHash");
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("Could not execute moduleGetHash: " + e.toString());
@@ -1511,6 +1509,7 @@ public class Getter {
     log.debug("*** END getModuleHash ***");
     return result;
   }
+
 
   /**
    * Convert module hash to ID
