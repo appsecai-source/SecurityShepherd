@@ -1423,21 +1423,25 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting start time");
-    PreparedStatement lockTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    lockTimeStatement.setString(1, theStartTime.toString());
-    lockTimeStatement.setString(2, "startTime");
+    try {
+      log.debug("Setting start time");
+      PreparedStatement lockTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      lockTimeStatement.setString(1, theStartTime.toString());
+      lockTimeStatement.setString(2, "startTime");
 
-    if (lockTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set start time to " + theStartTime);
+      if (lockTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set start time to " + theStartTime);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setStartTime ***");
     return result;
+  }
   }
 
   public static boolean setLockTimeStatus(String ApplicationRoot, boolean theLockTimeStatus)
