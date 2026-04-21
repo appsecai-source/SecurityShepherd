@@ -1262,20 +1262,21 @@ public class Setter {
     }
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
+      log.debug("Setting player cheat setting");
+      PreparedStatement moduleLayoutSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      moduleLayoutSetting.setString(1, theModuleLayout);
+      moduleLayoutSetting.setString(2, "modulelayout");
 
-    log.debug("Setting player cheat setting");
-    PreparedStatement moduleLayoutSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    moduleLayoutSetting.setString(1, theModuleLayout);
-    moduleLayoutSetting.setString(2, "modulelayout");
-
-    if (moduleLayoutSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set module layout to " + theModuleLayout);
+      if (moduleLayoutSetting.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set module layout to " + theModuleLayout);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
-
-    Database.closeConnection(conn);
     log.debug("*** END setModulelayout ***");
     return result;
   }
