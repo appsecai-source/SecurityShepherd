@@ -2823,24 +2823,25 @@ public class Getter {
     String theDefaultClass = null;
     log.debug("*** Getter.getDefaultClass ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot)) {
 
-    log.debug("Getting default class");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting default class");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "defaultClass");
+      callstmt.setString(1, "defaultClass");
 
-    ResultSet classResult = callstmt.executeQuery();
+      ResultSet classResult = callstmt.executeQuery();
 
-    classResult.next();
+      classResult.next();
 
-    theDefaultClass = classResult.getString(1);
+      theDefaultClass = classResult.getString(1);
 
-    log.debug("Value found: " + theDefaultClass);
+      log.debug("Value found: " + theDefaultClass);
 
-    Database.closeConnection(conn);
+    }
     log.debug("*** END getDefaultClass ***");
     return theDefaultClass;
+  }
   }
 }
