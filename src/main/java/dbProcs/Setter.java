@@ -1396,23 +1396,23 @@ public class Setter {
     log.debug("*** Setter.setStartTimeStatus ***");
     log.debug("theLockTimeStatus = " + theStartTimeStatus);
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-    log.debug("Setting start time setting");
-    PreparedStatement lockTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    lockTimeStatement.setBoolean(1, theStartTimeStatus);
-    lockTimeStatement.setString(2, "hasStartTime");
-
-    if (lockTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set start time status to " + theStartTimeStatus);
-    }
-
-    Database.closeConnection(conn);
-    log.debug("*** END setStartTimeStatus ***");
-    return result;
+    Connection conn = Database.getCoreConnection(ApplicationRoot); // L1399
+    try { // L1400
+      log.debug("Setting start time setting"); // L1401
+      PreparedStatement lockTimeStatement = // L1402
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?"); // L1403
+      lockTimeStatement.setBoolean(1, theStartTimeStatus); // L1404
+      lockTimeStatement.setString(2, "hasStartTime"); // L1405
+ // L1406
+      if (lockTimeStatement.executeUpdate() == 1) { // L1407
+        result = true; // L1408
+      } else { // L1409
+        throw new RuntimeException("Could not set start time status to " + theStartTimeStatus); // L1410
+      } // L1411
+    } finally { // L1412
+      Database.closeConnection(conn); // L1413
+    } // L1414
+    log.debug("*** END setStartTimeStatus ***"); // L1415
   }
 
   public static boolean setStartTime(String ApplicationRoot, LocalDateTime theStartTime)
