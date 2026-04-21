@@ -315,14 +315,20 @@ public class DirectObjectBankLogin extends HttpServlet {
    * @param applicationRoot Running Context of the application
    * @return Returns a Float Value representing the balance
    * @throws SQLException If no rows found or if SQL error occurs
+  /**
+   * Method to get the account balance from the DirectObjectBank for a specific account
+   *
+   * @param accountNumber The Account Number to Check the Balance Of
+   * @param applicationRoot Running Context of the application
+   * @return Returns a Float Value representing the balance
+   * @throws SQLException If no rows found or if SQL error occurs
    */
   public static long getAccountBalance(String accountNumber, String applicationRoot)
       throws SQLException {
     Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
-    CallableStatement callstmt;
+    CallableStatement callstmt = null;
     long toReturn = 0;
     try {
-
       callstmt = conn.prepareCall("CALL currentFunds(?)");
       callstmt.setString(1, accountNumber);
       ResultSet rs = callstmt.executeQuery();
@@ -331,10 +337,12 @@ public class DirectObjectBankLogin extends HttpServlet {
       } else {
         throw new SQLException("Could not Get Funds. No Rows Found From Query");
       }
-    } catch (SQLException e) {
-      throw e;
+    } finally {
+      if (conn != null) {
+        conn.close();
+      }
     }
-    conn.close();
     return toReturn;
   }
+
 }
