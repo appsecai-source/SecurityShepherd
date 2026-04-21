@@ -1583,29 +1583,45 @@ public class Getter {
    * @param applicationRoot Application Running Context
    * @param moduleId ID of the module to lookup
    * @return Locale key for the Module's Name.
-   */
   public static String getModuleNameLocaleKey(String applicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleNameLocaleKey ***");
     String result = new String();
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetNameLocale(?)");
+      callstmt = conn.prepareCall("call moduleGetNameLocale(?)");
       log.debug("Gathering moduleGetNameLocale ResultSet");
       callstmt.setString(1, moduleId);
-      ResultSet resultSet = callstmt.executeQuery();
+      resultSet = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleGetNameLocale");
       resultSet.next();
       result = resultSet.getString(1);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute moduleGetNameLocale: " + e.toString());
       result = null;
+    } finally {
+      try {
+        if (resultSet != null) {
+          resultSet.close();
+        }
+        if (callstmt != null) {
+          callstmt.close();
+        }
+        if (conn != null) {
+          Database.closeConnection(conn);
+        }
+      } catch (SQLException e) {
+        log.error("Error closing resources: " + e.toString());
+      }
     }
     log.debug("*** END getModuleNameLocaleKey ***");
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
