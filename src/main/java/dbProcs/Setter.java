@@ -669,54 +669,58 @@ public class Setter {
 
     boolean result = false;
 
-    Connection conn;
+    Connection conn = null;
     try {
       conn = Database.getCoreConnection(ApplicationRoot);
+
+      log.debug("Checking current password");
+      String user[] = Getter.authUser(ApplicationRoot, userName, currentPassword);
+
+      if (user == null || user[0].isEmpty()) {
+        // Wrong password
+        log.debug("Current password incorrect!");
+        return false;
+      }
+      if (user != null && !user[0].isEmpty()) {
+        // Correct password, proceed
+        log.debug("Hashing password");
+
+        Argon2 argon2 = Argon2Factory.create();
+
+        String newHash = argon2.hash(10, 65536, 1, newPassword.toCharArray());
+        // TODO: wipe password from memory after hashing
+
+        log.debug("Preparing userPasswordChange call");
+        CallableStatement callstmnt;
+        try {
+          callstmnt = conn.prepareCall("call userPasswordChange(?, ?)");
+          callstmnt.setString(1, userName);
+
+          callstmnt.setString(2, newHash);
+          log.debug("Executing userPasswordChange");
+          callstmnt.execute();
+          result = true;
+        } catch (SQLException e) {
+          log.debug("Could not update password: " + e.toString());
+          throw new RuntimeException(e);
+        }
+
+      } else {
+        log.debug("Could not verify password!");
+        return false;
+      }
     } catch (SQLException e) {
       log.debug("Could not get core connection: " + e.toString());
       throw new RuntimeException(e);
-    }
-
-    log.debug("Checking current password");
-    String user[] = Getter.authUser(ApplicationRoot, userName, currentPassword);
-
-    if (user == null || user[0].isEmpty()) {
-      // Wrong password
-      log.debug("Current password incorrect!");
-      return false;
-    }
-    if (user != null && !user[0].isEmpty()) {
-      // Correct password, proceed
-      log.debug("Hashing password");
-
-      Argon2 argon2 = Argon2Factory.create();
-
-      String newHash = argon2.hash(10, 65536, 1, newPassword.toCharArray());
-      // TODO: wipe password from memory after hashing
-
-      log.debug("Preparing userPasswordChange call");
-      CallableStatement callstmnt;
-      try {
-        callstmnt = conn.prepareCall("call userPasswordChange(?, ?)");
-        callstmnt.setString(1, userName);
-
-        callstmnt.setString(2, newHash);
-        log.debug("Executing userPasswordChange");
-        callstmnt.execute();
-        result = true;
-      } catch (SQLException e) {
-        log.debug("Could not update password: " + e.toString());
-        throw new RuntimeException(e);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
       }
-
-    } else {
-      log.debug("Could not verify password!");
-      return false;
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END updatePassword ***");
     return result;
+  }
   }
 
   /**
