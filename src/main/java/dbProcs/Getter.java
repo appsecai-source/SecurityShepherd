@@ -2487,31 +2487,45 @@ public class Getter {
     log.debug("*** END findAdminById ***");
     return userFound;
   }
-
   public static boolean getAdminCheatStatus(String ApplicationRoot) throws SQLException {
     boolean adminCheatStatus = false;
     log.debug("*** Getter.getAdminCheatStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    PreparedStatement callstmt = null;
+    ResultSet cheatResult = null;
+    
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting admin cheat setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting admin cheat setting");
+      callstmt = conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "adminCheatsEnabled");
+      callstmt.setString(1, "adminCheatsEnabled");
 
-    ResultSet cheatResult = callstmt.executeQuery();
+      cheatResult = callstmt.executeQuery();
 
-    cheatResult.next();
+      cheatResult.next();
 
-    adminCheatStatus = cheatResult.getBoolean(1);
+      adminCheatStatus = cheatResult.getBoolean(1);
 
-    log.debug("Value found: " + adminCheatStatus);
-
-    Database.closeConnection(conn);
+      log.debug("Value found: " + adminCheatStatus);
+    } finally {
+      if (cheatResult != null) {
+        try { cheatResult.close(); } catch (SQLException e) { log.error("Error closing ResultSet: " + e); }
+      }
+      if (callstmt != null) {
+        try { callstmt.close(); } catch (SQLException e) { log.error("Error closing PreparedStatement: " + e); }
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
+    
     log.debug("*** END getAdminCheatStatus ***");
     return adminCheatStatus;
   }
+
 
   public static boolean getPlayerCheatStatus(String ApplicationRoot) throws SQLException {
     boolean getPlayerCheatStatus = false;
