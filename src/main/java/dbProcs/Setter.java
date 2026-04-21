@@ -608,16 +608,15 @@ public class Setter {
     log.debug("*** Setter.unSuspendUser ***");
 
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    boolean result = false;
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement callstmnt = conn.prepareCall("CALL unSuspendUser(?)")) {
 
       log.debug("Prepairing suspendUser call");
-      PreparedStatement callstmnt = conn.prepareCall("CALL unSuspendUser(?)");
       callstmnt.setString(1, userId);
       log.debug("Executing unSuspendUser statement on id '" + userId + "'");
       callstmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("unSuspendUser Failure: " + e.toString());
