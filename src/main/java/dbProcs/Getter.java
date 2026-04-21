@@ -505,13 +505,12 @@ public class Getter {
    *
    * @param userId The user identifier of the player to be found
    * @return A boolean reflecting the state of existence of the player
-   */
   public static boolean findPlayerById(String ApplicationRoot, String userId) {
     log.debug("*** Getter.findPlayerById ***");
     boolean userFound = false;
-    // Get connection
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       CallableStatement callstmt = conn.prepareCall("call playerFindById(?)");
       log.debug("Gathering playerFindById ResultSet");
@@ -523,15 +522,19 @@ public class Getter {
           "Player Found: "
               + userFind.getString(1)); // This line will not execute if player not found
       userFound = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Player did not exist: " + e.toString());
       userFound = false;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END findPlayerById ***");
     return userFound;
   }
+
 
   /**
    * Used to gather all module information for internal functionality. This method is used in
