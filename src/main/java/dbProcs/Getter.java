@@ -2719,26 +2719,33 @@ public class Getter {
     Boolean theLockTimeStatus = null;
     log.debug("*** Getter.getLockTimeStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting lock time setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting lock time setting");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "hasLockTime");
+      callstmt.setString(1, "hasLockTime");
 
-    ResultSet timestampResult = callstmt.executeQuery();
+      ResultSet timestampResult = callstmt.executeQuery();
 
-    timestampResult.next();
+      timestampResult.next();
 
-    theLockTimeStatus = timestampResult.getBoolean(1);
+      theLockTimeStatus = timestampResult.getBoolean(1);
 
-    log.debug("Value found: " + theLockTimeStatus);
+      log.debug("Value found: " + theLockTimeStatus);
 
-    Database.closeConnection(conn);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
     log.debug("*** END getLockTimeStatus ***");
     return theLockTimeStatus;
   }
+
 
   public static LocalDateTime getLockTime(String ApplicationRoot) throws SQLException {
     LocalDateTime theLockTimeStatus = null;
