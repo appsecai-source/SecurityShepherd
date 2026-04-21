@@ -1715,12 +1715,10 @@ public class Getter {
   public static String getModulesInOptionTagsCTF(String ApplicationRoot) {
     log.debug("*** Getter.getModulesInOptionTags ***");
     String output = new String();
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-      PreparedStatement callstmt =
-          conn.prepareStatement(
-              "SELECT moduleId, moduleName FROM modules ORDER BY incrementalRank;");
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement callstmt = 
+             conn.prepareStatement(
+                 "SELECT moduleId, moduleName FROM modules ORDER BY incrementalRank;")) {
       log.debug("Gathering moduleAllInfo ResultSet");
       ResultSet modules = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleAllInfo");
@@ -1734,7 +1732,6 @@ public class Getter {
                 + Encode.forHtml(modules.getString(2))
                 + "</option>\n";
       }
-      Database.closeConnection(conn);
 
     } catch (Exception e) {
       log.error("Challenge Retrieval: " + e.toString());
@@ -1742,6 +1739,7 @@ public class Getter {
     log.debug("*** END getModulesInOptionTags() ***");
     return output;
   }
+
 
   /**
    * Used to return a module cheat sheet
