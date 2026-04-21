@@ -2439,8 +2439,9 @@ public class Getter {
   public static ResultSet getAdmins(String ApplicationRoot) {
     ResultSet result = null;
     log.debug("*** Getter.adminGetAll () ***");
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       CallableStatement callstmt = conn.prepareCall("call adminGetAll()");
       log.debug("Gathering adminGetAll ResultSet");
@@ -2450,10 +2451,19 @@ public class Getter {
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
       result = null;
+    } finally {
+      if (conn != null) {
+        try {
+          conn.close();
+        } catch (SQLException e) {
+          log.error("Could not close connection: " + e.toString());
+        }
+      }
     }
     log.debug("*** END adminGetAll ***");
     return result;
   }
+
 
   /**
    * Used to decipher whether or not a user exists as an admin
