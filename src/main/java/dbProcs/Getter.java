@@ -2796,27 +2796,34 @@ public class Getter {
     LocalDateTime theEndTimeStatus = null;
     log.debug("*** Getter.getEndTimeStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting end time");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting end time");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "endTime");
+      callstmt.setString(1, "endTime");
 
-    ResultSet timestampResult = callstmt.executeQuery();
+      ResultSet timestampResult = callstmt.executeQuery();
 
-    timestampResult.next();
+      timestampResult.next();
 
-    String dateTimeString = timestampResult.getString(1);
+      String dateTimeString = timestampResult.getString(1);
 
-    log.debug("Value found: " + dateTimeString);
+      log.debug("Value found: " + dateTimeString);
 
-    theEndTimeStatus = LocalDateTime.parse(dateTimeString);
-
-    Database.closeConnection(conn);
+      theEndTimeStatus = LocalDateTime.parse(dateTimeString);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
     log.debug("*** END getEndTime ***");
     return theEndTimeStatus;
+  }
+
   }
 
   public static String getDefaultClass(String ApplicationRoot) throws SQLException {
