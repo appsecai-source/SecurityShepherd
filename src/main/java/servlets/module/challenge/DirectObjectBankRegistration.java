@@ -73,24 +73,24 @@ public class DirectObjectBankRegistration extends HttpServlet {
         log.debug("Account Pass - " + accountPass);
         String applicationRoot = getServletContext().getRealPath("");
         String htmlOutput = new String();
+        String applicationRoot = getServletContext().getRealPath("");
 
-        Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
-        CallableStatement callstmt = conn.prepareCall("CALL createAccount(?, ?)");
-        callstmt.setString(1, accountHolder);
-        callstmt.setString(2, accountPass);
-        callstmt.execute();
-        log.debug("Sucessfully ran create account procedure.");
-        log.debug("Outputting HTML");
-        htmlOutput = bundle.getString("register.accountCreated");
-        out.write(htmlOutput);
-        Database.closeConnection(conn);
-      } catch (SQLException e) {
-        out.write(errors.getString("error.funky") + " " + bundle.getString("register.error"));
-        log.fatal(levelName + " SQL Error - " + e.toString());
-      } catch (Exception e) {
-        out.write(errors.getString("error.funky"));
-        log.fatal(levelName + " - " + e.toString());
-      }
+        try (Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
+             CallableStatement callstmt = conn.prepareCall("CALL createAccount(?, ?)")) {
+          callstmt.setString(1, accountHolder);
+          callstmt.setString(2, accountPass);
+          callstmt.execute();
+          log.debug("Sucessfully ran create account procedure.");
+          log.debug("Outputting HTML");
+          htmlOutput = bundle.getString("register.accountCreated");
+          out.write(htmlOutput);
+        } catch (SQLException e) {
+          out.write(errors.getString("error.funky") + " " + bundle.getString("register.error"));
+          log.fatal(levelName + " SQL Error - " + e.toString());
+        } catch (Exception e) {
+          out.write(errors.getString("error.funky"));
+          log.fatal(levelName + " - " + e.toString());
+        }
     } else {
       log.error(levelName + " servlet accessed with no session");
     }
