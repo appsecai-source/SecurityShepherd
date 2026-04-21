@@ -200,7 +200,7 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
       throws SQLException {
     boolean validToken = false;
     log.debug("Checking token:" + token);
-    Connection conn =
+    Connection conn = 
         Database.getChallengeConnection(applicationRoot, "SecurityMisconfigStealToken");
     try {
       CallableStatement validateTokenCs = conn.prepareCall("call validToken(?, ?)");
@@ -221,8 +221,10 @@ public class SecurityMisconfigStealTokens extends HttpServlet {
     } catch (SQLException e) {
       log.error("Could not verify token: " + e.toString());
       throw e;
+    } finally {
+      conn.close();
     }
-    conn.close();
     return validToken;
   }
+
 }
