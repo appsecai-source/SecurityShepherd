@@ -159,12 +159,12 @@ jobs:
           # Numeric FoD release identifier; release must already exist and be configured.
           FOD_RELEASE: ${{ secrets.FOD_RELEASE_ID }}
           PACKAGE_EXTRA_OPTS: -bt mvn
-          DO_WAIT: true
+          DO_WAIT: false
           DO_JOB_SUMMARY: ${{ vars.FOD_DO_JOB_SUMMARY || 'false' }}
           # Disable GitHub Code Scanning export by default; it can add noticeable time
           # when processing large finding sets and is not required for Aviator remediation.
           DO_EXPORT: ${{ vars.FOD_DO_EXPORT || 'false' }}
-          DO_DEBRICKED: true
+          DO_SCA_SCAN: true
           DO_PR_COMMENT: ${{ github.event_name == 'pull_request' }}
 
   fortify-aviator-remediation:
