@@ -109,15 +109,29 @@ public class DirectObjectBankTransfer extends HttpServlet {
         String htmlOutput = new String();
         if (performTransfer) {
           log.debug("Valid Data Submitted, transfering Funds...");
-          Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
-          CallableStatement callstmt = conn.prepareCall("CALL transferFunds(?, ?, ?)");
-          callstmt.setString(1, senderAccountNumber);
-          callstmt.setString(2, recieverAccountNumber);
-          callstmt.setFloat(3, tranferAmount);
-          callstmt.execute();
-          log.debug("Sucessfully ran Transfer Funds procedure.");
-          htmlOutput = bundle.getString("transfer.success");
-          Database.closeConnection(conn);
+          Connection conn = null;
+          CallableStatement callstmt = null;
+          try {
+            conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
+            callstmt = conn.prepareCall("CALL transferFunds(?, ?, ?)");
+            callstmt.setString(1, senderAccountNumber);
+            callstmt.setString(2, recieverAccountNumber);
+            callstmt.setFloat(3, tranferAmount);
+            callstmt.execute();
+            log.debug("Sucessfully ran Transfer Funds procedure.");
+            htmlOutput = bundle.getString("transfer.success");
+          } finally {
+            if (callstmt != null) {
+              try {
+                callstmt.close();
+              } catch (SQLException e) {
+                log.error("Error closing CallableStatement: " + e.toString());
+              }
+            }
+            if (conn != null) {
+              Database.closeConnection(conn);
+            }
+          }
         } else {
           log.debug("Invalid Data Detected: " + errorMessage);
           htmlOutput = bundle.getString("transfer.error.occurred") + " " + errorMessage;
