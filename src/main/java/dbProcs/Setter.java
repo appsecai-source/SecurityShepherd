@@ -137,11 +137,12 @@ public class Setter {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Prepairing bad Submission call");
-      PreparedStatement callstmnt = conn.prepareCall("CALL userBadSubmission(?)");
-      callstmnt.setString(1, userId);
-      log.debug("Executing userBadSubmission statement on id '" + userId + "'");
-      callstmnt.execute();
-      result = true;
+      try (PreparedStatement callstmnt = conn.prepareCall("CALL userBadSubmission(?)")) {
+        callstmnt.setString(1, userId);
+        log.debug("Executing userBadSubmission statement on id '" + userId + "'");
+        callstmnt.execute();
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
