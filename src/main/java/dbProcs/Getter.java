@@ -2542,26 +2542,32 @@ public class Getter {
     String theModuleLayout = "";
     log.debug("*** Getter.getModuleLayout ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting module layout setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting module layout setting");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "moduleLayout");
+      callstmt.setString(1, "moduleLayout");
 
-    ResultSet layoutResult = callstmt.executeQuery();
+      ResultSet layoutResult = callstmt.executeQuery();
 
-    layoutResult.next();
+      layoutResult.next();
 
-    theModuleLayout = layoutResult.getString(1);
+      theModuleLayout = layoutResult.getString(1);
 
-    log.debug("Value found: " + theModuleLayout);
-
-    Database.closeConnection(conn);
+      log.debug("Value found: " + theModuleLayout);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
     log.debug("*** END getModuleLayout ***");
     return theModuleLayout;
   }
+
 
   public static boolean getFeedbackStatus(String ApplicationRoot) throws SQLException {
     boolean theFeedbackStatus = false;
