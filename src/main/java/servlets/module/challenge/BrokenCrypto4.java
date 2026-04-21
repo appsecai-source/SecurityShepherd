@@ -94,13 +94,15 @@ public class BrokenCrypto4 extends HttpServlet {
         int perCentOffBanana = 0; // Will search for coupons in DB and update this int
 
         htmlOutput = new String();
-        Connection conn = Database.getChallengeConnection(applicationRoot, "CryptoChallengeShop");
-        log.debug("Looking for Coupons");
-        PreparedStatement prepstmt =
-            conn.prepareStatement("SELECT itemId, perCentOff FROM coupons WHERE couponCode = ?");
-        prepstmt.setString(1, couponCode);
-        ResultSet coupons = prepstmt.executeQuery();
+        Connection conn = null;
+        PreparedStatement prepstmt = null;
+        ResultSet coupons = null;
         try {
+          conn = Database.getChallengeConnection(applicationRoot, "CryptoChallengeShop");
+          log.debug("Looking for Coupons");
+          prepstmt = conn.prepareStatement("SELECT itemId, perCentOff FROM coupons WHERE couponCode = ?");
+          prepstmt.setString(1, couponCode);
+          coupons = prepstmt.executeQuery();
           if (coupons.next()) {
             if (coupons.getInt(1) == 1) // Pineapple
             {
@@ -124,8 +126,30 @@ public class BrokenCrypto4 extends HttpServlet {
           }
         } catch (Exception e) {
           log.debug("Could Not Find Coupon: " + e.toString());
+        } finally {
+          try {
+            if (coupons != null) {
+              coupons.close();
+            }
+          } catch (Exception e) {
+            log.debug("Error closing ResultSet: " + e.toString());
+          }
+          try {
+            if (prepstmt != null) {
+              prepstmt.close();
+            }
+          } catch (Exception e) {
+            log.debug("Error closing PreparedStatement: " + e.toString());
+          }
+          try {
+            if (conn != null) {
+              conn.close();
+            }
+          } catch (Exception e) {
+            log.debug("Error closing Connection: " + e.toString());
+          }
         }
-        conn.close();
+
 
         // Work Out Final Cost
         pineappleCost = pineappleCost - (pineappleCost * (perCentOffPineapple / 100));
