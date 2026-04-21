@@ -937,7 +937,6 @@ public class Setter {
    * @param userId Identifier of user to update
    * @param points Positive or Negative number of points to update by
    * @return Returns true if statement executes without fatal error
-   */
   public static boolean updateUserPoints(String ApplicationRoot, String userId, int points) {
     log.debug("*** Setter.updateUserPoints ***");
 
@@ -946,13 +945,14 @@ public class Setter {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Preparing updateUserPoints call");
-      PreparedStatement prestmnt =
-          conn.prepareStatement("UPDATE users SET userScore = userScore + ? WHERE userId = ?");
-      prestmnt.setInt(1, points);
-      prestmnt.setString(2, userId);
-      log.debug("Executing updateUserPoints");
-      prestmnt.execute();
-      result = true;
+      try (PreparedStatement prestmnt =
+          conn.prepareStatement("UPDATE users SET userScore = userScore + ? WHERE userId = ?")) {
+        prestmnt.setInt(1, points);
+        prestmnt.setString(2, userId);
+        log.debug("Executing updateUserPoints");
+        prestmnt.execute();
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -961,6 +961,7 @@ public class Setter {
     log.debug("*** END updateUserPoints ***");
     return result;
   }
+
 
   /**
    * Updates a USER's role
