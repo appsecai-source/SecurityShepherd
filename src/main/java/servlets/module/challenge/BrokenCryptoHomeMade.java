@@ -298,7 +298,7 @@ public class BrokenCryptoHomeMade extends HttpServlet {
     String decryptedUserName = new String();
     try {
       decryptedUserName = decrypt(userNameKey, encyptedUserName);
-      log.debug("Decrypted user-name to: " + decryptedUserName);
+      // Username decryption successful
     } catch (GeneralSecurityException e) {
       log.error("Could not decrypt user name: " + e.toString());
     }
