@@ -1287,24 +1287,27 @@ public class Setter {
     log.debug("feedbackStatus = " + theFeebackStatus);
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
 
-    log.debug("Setting feedback status setting");
-    PreparedStatement getFeedbackSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    getFeedbackSetting.setBoolean(1, theFeebackStatus);
-    getFeedbackSetting.setString(2, "enableFeedback");
+      log.debug("Setting feedback status setting");
+      PreparedStatement getFeedbackSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      getFeedbackSetting.setBoolean(1, theFeebackStatus);
+      getFeedbackSetting.setString(2, "enableFeedback");
 
-    int updateResult = getFeedbackSetting.executeUpdate();
+      int updateResult = getFeedbackSetting.executeUpdate();
 
-    if (updateResult == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set feedback status to " + theFeebackStatus);
+      if (updateResult == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set feedback status to " + theFeebackStatus);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
-
-    Database.closeConnection(conn);
     log.debug("*** END setFeedbackStatus ***");
     return result;
+
   }
 
   public static boolean setRegistrationStatus(String ApplicationRoot, boolean theRegistrationStatus)
