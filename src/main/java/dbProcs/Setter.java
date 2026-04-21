@@ -477,27 +477,26 @@ public class Setter {
    * @param ApplicationRoot Current running director of the application
    * @param moduleId The identifier of the module that is been set to closed status
    * @return Boolean result depicting success of statement
-   */
   public static boolean setModuleStatusClosed(String ApplicationRoot, String moduleId) {
     log.debug("*** Setter.setModuleStatusClosed ***");
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call moduleSetStatus(?, ?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call moduleSetStatus(?, ?)");
       log.debug("Preparing moduleSetStatus procedure");
       callstmt.setString(1, moduleId);
       callstmt.setString(2, "closed");
       callstmt.execute();
       log.debug("Executed moduleSetStatus");
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute moduleSetStatus: " + e.toString());
     }
     log.debug("*** END setModuleStatusClosed ***");
     return result;
+  }
+
   }
 
   /**
