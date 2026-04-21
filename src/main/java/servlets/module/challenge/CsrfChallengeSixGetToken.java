@@ -71,10 +71,9 @@ public class CsrfChallengeSixGetToken extends HttpServlet {
         String htmlOutput = new String("Your csrf Token for this Challenge is: ");
         String userId = request.getParameter("userId").toString();
 
-        Connection conn =
+        try (Connection conn =
             Database.getChallengeConnection(
-                getServletContext().getRealPath(""), "csrfChallengeSix");
-        try {
+                getServletContext().getRealPath(""), "csrfChallengeSix")) {
           log.debug("Preparing setCsrfChallengeSixToken call");
           PreparedStatement callstmnt =
               conn.prepareStatement(
@@ -88,7 +87,6 @@ public class CsrfChallengeSixGetToken extends HttpServlet {
             htmlOutput += Encode.forHtml("\"" + rs.getString(1) + "\"") + " <br/>";
           }
           log.debug("Returned " + i + " CSRF Tokens for ID: " + userId);
-          conn.close();
         } catch (Exception e) {
           log.debug("Could not retrieve Challenge CSRF Tokens: " + e.toString());
           htmlOutput = csrfGenerics.getString("error.noToken");
