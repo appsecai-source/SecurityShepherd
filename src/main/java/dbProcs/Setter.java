@@ -1079,7 +1079,7 @@ public class Setter {
     log.debug("ssoName = " + ssoName);
     // We don't log passwords
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot)) {
 
     String newUsername = userName;
 
@@ -1141,15 +1141,15 @@ public class Setter {
       callstmt.setString(3, "DISABLED");
       callstmt.setString(4, userRole);
       callstmt.setString(5, ssoName);
-      callstmt.setString(6, ""); // userAddress
-      callstmt.setString(7, "saml"); // login type
-      callstmt.setBoolean(8, false); // temppass
-      callstmt.setBoolean(9, true); // Tempname
+      callstmt.setString(6, "");
+      callstmt.setString(7, "saml");
+      callstmt.setBoolean(8, false);
+      callstmt.setBoolean(9, true);
 
       ResultSet registerAttempt = callstmt.executeQuery();
       log.debug("Opening result set");
 
-      registerAttempt.next(); // Procedure Ran correctly
+      registerAttempt.next();
 
       if (registerAttempt.getString(1) == null) {
         // Registration success
@@ -1166,9 +1166,10 @@ public class Setter {
       log.fatal("userCreate Failure: " + e.toString());
       throw new SQLException(e);
     }
-    Database.closeConnection(conn);
+
     log.debug("*** END userCreateSSO ***");
     return result;
+  }
   }
 
   public static boolean userDelete(String ApplicationRoot, String userId) throws SQLException {
