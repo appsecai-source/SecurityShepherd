@@ -869,13 +869,13 @@ public class Getter {
    * @param applicationRoot The current running context of the application.
    * @param moduleId The module identifier
    * @return A HTML table of the feedback for a specific module
-   */
   public static String getFeedback(String applicationRoot, String moduleId) {
     log.debug("*** Getter.getFeedback ***");
 
     String result = new String();
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
       log.debug("Preparing moduleFeedback call");
       CallableStatement callstmnt = conn.prepareCall("call moduleFeedback(?)");
@@ -894,15 +894,13 @@ public class Getter {
           before += resultSet.getInt(4);
           after += resultSet.getInt(5);
           result += "<tr ";
-          if (color) // Alternate row color
-          {
+          if (color) {
             color = !color;
             result += "BGCOLOR='A878EF'";
           } else {
             color = !color;
             result += "BGCOLOR='D4BCF7'";
           }
-          // A row off information
           result +=
               "><td>"
                   + Encode.forHtml(resultSet.getString(1))
@@ -919,8 +917,7 @@ public class Getter {
                   + "</td></tr>";
         }
       }
-      if (resultAmount > 0) // Table header
-      {
+      if (resultAmount > 0) {
         result =
             "<table><tr><th>Player</th><th>Time</th><th>Difficulty</th><th>Before</th><th>After</th><th>Comments</th></tr>"
                 + "<tr><td>Average</td><td></td><td>"
@@ -932,20 +929,22 @@ public class Getter {
                 + "</td><td></td></tr>"
                 + result
                 + "<table>";
-      } else // If empty, Blank output
-      {
+      } else {
         result = new String();
       }
-
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("moduleFeedback Failure: " + e.toString());
       result = null;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getFeedback ***");
     return result;
   }
+
 
   /**
    * This method prepares the incremental module menu. This is when Security Shepherd is in "Game
