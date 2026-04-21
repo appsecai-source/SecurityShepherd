@@ -128,29 +128,41 @@ public class Setter {
    * @param ApplicationRoot application running context
    * @param userId user identifier to increment
    * @return False if the statement fails to execute
-   */
   public static boolean incrementBadSubmission(String ApplicationRoot, String userId) {
     log.debug("*** Setter.incrementBadSubmission ***");
 
     boolean result = false;
+    Connection conn = null;
+    PreparedStatement callstmnt = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Prepairing bad Submission call");
-      PreparedStatement callstmnt = conn.prepareCall("CALL userBadSubmission(?)");
+      callstmnt = conn.prepareCall("CALL userBadSubmission(?)");
       callstmnt.setString(1, userId);
       log.debug("Executing userBadSubmission statement on id '" + userId + "'");
       callstmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("userBadSubmission Failure: " + e.toString());
       result = false;
+    } finally {
+      if (callstmnt != null) {
+        try {
+          callstmnt.close();
+        } catch (SQLException e) {
+          log.error("Error closing PreparedStatement: " + e.toString());
+        }
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END userBadSubmisison ***");
     return result;
   }
+
 
   /**
    * This method sets every module status to Open.
