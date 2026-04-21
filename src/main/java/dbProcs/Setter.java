@@ -234,7 +234,7 @@ public class Setter {
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      PreparedStatement prepstmt =
+      try (PreparedStatement prepstmt1 = 
           conn.prepareStatement(
               "UPDATE modules SET moduleStatus = 'open' WHERE "
                   + "("
@@ -242,15 +242,16 @@ public class Setter {
                   + ")"
                   + " AND isUnsafe = "
                   + unsafe);
-      prepstmt.execute();
-      log.debug("Web Levels have been opened");
-      prepstmt =
+           PreparedStatement prepstmt2 = 
           conn.prepareStatement(
               "UPDATE modules SET moduleStatus = 'closed' WHERE "
-                  + mobileModuleCategoryHardcodedWhereClause);
-      prepstmt.execute();
-      log.debug("Mobile Levels have been closed");
-      result = true;
+                  + mobileModuleCategoryHardcodedWhereClause)) {
+        prepstmt1.execute();
+        log.debug("Web Levels have been opened");
+        prepstmt2.execute();
+        log.debug("Mobile Levels have been closed");
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
