@@ -1983,40 +1983,36 @@ public class Getter {
     log.debug("*** Getter.getProgressJSON ***");
 
     String result = new String();
-    try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
-
+    try (Connection conn = Database.getCoreConnection(applicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call userProgress(?)")) {
+      
       log.debug("Preparing userProgress call");
-      // Returns User's: Name, # of Completed modules and Score
-      CallableStatement callstmnt = conn.prepareCall("call userProgress(?)");
       callstmnt.setString(1, classId);
       log.debug("Executing userProgress");
-      ResultSet resultSet = callstmnt.executeQuery();
-      JSONArray json = new JSONArray();
-      JSONObject jsonInner = new JSONObject();
-      int resultAmount = 0;
-      while (resultSet.next()) // For each user in a class
-      {
-        resultAmount++;
-        jsonInner = new JSONObject();
-        if (resultSet.getString(1) != null) {
-          jsonInner.put(
-              "userName", new String(Encode.forHtml(resultSet.getString(1)))); // User Name
-          jsonInner.put(
-              "progressBar", Integer.valueOf(resultSet.getInt(2) * widthOfUnitBar)); // Progress Bar
-          // Width
-          jsonInner.put("score", Integer.valueOf(resultSet.getInt(3))); // Score
-          log.debug("Adding: " + jsonInner.toString());
-          json.put(jsonInner);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        JSONArray json = new JSONArray();
+        JSONObject jsonInner = new JSONObject();
+        int resultAmount = 0;
+        while (resultSet.next()) {
+          resultAmount++;
+          jsonInner = new JSONObject();
+          if (resultSet.getString(1) != null) {
+            jsonInner.put(
+                "userName", new String(Encode.forHtml(resultSet.getString(1))));
+            jsonInner.put(
+                "progressBar", Integer.valueOf(resultSet.getInt(2) * widthOfUnitBar));
+            jsonInner.put("score", Integer.valueOf(resultSet.getInt(3)));
+            log.debug("Adding: " + jsonInner.toString());
+            json.put(jsonInner);
+          }
+        }
+        if (resultAmount > 0) {
+          result = json.toString();
+        } else {
+          result = new String();
         }
       }
-      if (resultAmount > 0) {
-        result = json.toString();
-      } else {
-        result = new String();
-      }
-      Database.closeConnection(conn);
-
     } catch (SQLException e) {
       log.error("getProgressJSON Failure: " + e.toString());
       result = null;
@@ -2026,6 +2022,7 @@ public class Getter {
     }
     log.debug("*** END getProgressJSON ***");
     return result;
+  }
   }
 
   private static int getTounnamentSectionFromRankNumber(int rankNumber) {
