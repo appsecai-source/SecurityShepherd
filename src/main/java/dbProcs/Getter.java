@@ -1492,21 +1492,41 @@ public class Getter {
   public static String getModuleHash(String applicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleHash ***");
     String result = new String();
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetHashById(?)");
+      callstmt = conn.prepareCall("call moduleGetHashById(?)");
       log.debug("Gathering moduleGetHash ResultSet");
       callstmt.setString(1, moduleId);
-      ResultSet resultSet = callstmt.executeQuery();
+      resultSet = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleGetHash");
       resultSet.next();
       result = resultSet.getString(1);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute moduleGetHash: " + e.toString());
       result = null;
+    } finally {
+      if (resultSet != null) {
+        try {
+          resultSet.close();
+        } catch (SQLException e) {
+          log.error("Could not close ResultSet: " + e.toString());
+        }
+      }
+      if (callstmt != null) {
+        try {
+          callstmt.close();
+        } catch (SQLException e) {
+          log.error("Could not close CallableStatement: " + e.toString());
+        }
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getModuleHash ***");
     return result;
