@@ -80,12 +80,13 @@ public class Setter {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Preparing classCreate call");
-      CallableStatement callstmnt = conn.prepareCall("call classCreate(?, ?)");
-      callstmnt.setString(1, className);
-      callstmnt.setString(2, classYear);
-      log.debug("Executing classCreate");
-      callstmnt.execute();
-      result = true;
+      try (CallableStatement callstmnt = conn.prepareCall("call classCreate(?, ?)")) {
+        callstmnt.setString(1, className);
+        callstmnt.setString(2, classYear);
+        log.debug("Executing classCreate");
+        callstmnt.execute();
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -93,6 +94,7 @@ public class Setter {
     }
     log.debug("*** END classCreate ***");
     return result;
+
   }
 
   /**
