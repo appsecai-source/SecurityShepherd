@@ -144,17 +144,14 @@ public class ModuleServletTemplate extends HttpServlet {
       String applicationRoot, String username, ResourceBundle bundle) {
 
     String result = new String();
+    Connection conn = null;
+    Statement stmt = null;
+    ResultSet resultSet = null;
+    
     try {
-      // You will need to make a schema in the database/moduleSchemas.sql file, and define a user
-      // which can access it.
-      // The details of this user need to be entered in a properties file in WEB-INF/challenges
-      // The Name of that user need to be entered in the following funciton;
-      Connection conn =
-          Database.getChallengeConnection(applicationRoot, "nameOfPropertiesFile.properties");
-      Statement stmt;
+      conn = Database.getChallengeConnection(applicationRoot, "nameOfPropertiesFile.properties");
       stmt = conn.createStatement();
-      ResultSet resultSet =
-          stmt.executeQuery("SELECT * FROM tb_users WHERE username = '" + username + "'");
+      resultSet = stmt.executeQuery("SELECT * FROM tb_users WHERE username = '" + username + "'");
       log.debug("Opening Result Set from query");
       for (int i = 0; resultSet.next(); i++) {
         log.debug("Row " + i + ": User ID = " + resultSet.getString(1));
@@ -163,15 +160,31 @@ public class ModuleServletTemplate extends HttpServlet {
       log.debug("That's All");
     } catch (SQLException e) {
       log.debug("SQL Error caught - " + e.toString());
-      result =
-          bundle.getString("example.error")
-              + ": "
-              + Encode.forHtml(e.toString()); // Html Encode Error to prevent XSS
+      result = bundle.getString("example.error") + ": " + Encode.forHtml(e.toString());
     } catch (Exception e) {
-      log.fatal(
-          bundle.getString("example.error")
-              + ": "
-              + Encode.forHtml(e.toString())); // Html Encode Error to prevent XSS
+      log.fatal(bundle.getString("example.error") + ": " + Encode.forHtml(e.toString()));
+    } finally {
+      if (resultSet != null) {
+        try {
+          resultSet.close();
+        } catch (SQLException e) {
+          log.error("Error closing ResultSet: " + e.toString());
+        }
+      }
+      if (stmt != null) {
+        try {
+          stmt.close();
+        } catch (SQLException e) {
+          log.error("Error closing Statement: " + e.toString());
+        }
+      }
+      if (conn != null) {
+        try {
+          conn.close();
+        } catch (SQLException e) {
+          log.error("Error closing Connection: " + e.toString());
+        }
+      }
     }
     return result;
   }
