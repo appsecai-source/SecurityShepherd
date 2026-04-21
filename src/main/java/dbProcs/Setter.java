@@ -390,30 +390,30 @@ public class Setter {
    * @param csrfToken CSRF Token to add to the csrfChallengeSix DB Schema
    * @param ApplicationRoot Running context of the application
    * @return
-   */
   public static boolean setCsrfChallengeSevenCsrfToken(
       String userId, String csrfToken, String ApplicationRoot) {
     log.debug("*** setCsrfChallengeSevenToken ***");
     boolean result = false;
-    try {
-      Connection conn =
-          Database.getChallengeConnection(ApplicationRoot, "csrfChallengeEnumerateTokens");
+    
+    try (Connection conn =
+        Database.getChallengeConnection(ApplicationRoot, "csrfChallengeEnumerateTokens")) {
 
       boolean updateToken = false;
       log.debug("Preparing setCsrfChallengeSevenToken call");
-      PreparedStatement prestmnt =
-          conn.prepareStatement("SELECT csrfTokenscol FROM csrfTokens WHERE userId = ?");
-      prestmnt.setString(1, userId);
-      log.debug("Executing setCsrfChallengeSevenToken");
-      ResultSet rs = prestmnt.executeQuery();
-      if (rs.next()) {
-        // Need to Update CSRF token rather than Insert
-        log.debug("CSRF token Found for Challenge 7... Updating");
-        updateToken = true;
-      } else {
-        log.debug("No CSRF token Found for Challenge 7... Creating");
+      
+      try (PreparedStatement prestmnt =
+          conn.prepareStatement("SELECT csrfTokenscol FROM csrfTokens WHERE userId = ?")) {
+        prestmnt.setString(1, userId);
+        log.debug("Executing setCsrfChallengeSevenToken");
+        ResultSet rs = prestmnt.executeQuery();
+        if (rs.next()) {
+          log.debug("CSRF token Found for Challenge 7... Updating");
+          updateToken = true;
+        } else {
+          log.debug("No CSRF token Found for Challenge 7... Creating");
+        }
+        rs.close();
       }
-      rs.close();
 
       String whatToDo;
       if (updateToken) {
@@ -424,20 +424,21 @@ public class Setter {
             "INSERT INTO `csrfChallengeEnumTokens`.`csrfTokens` (`csrfTokenscol`, `userId`) VALUES"
                 + " (?, ?)";
       }
-      prestmnt = conn.prepareStatement(whatToDo);
-      prestmnt.setString(1, csrfToken);
-      prestmnt.setString(2, userId);
-      log.debug("Executing: " + whatToDo);
-      prestmnt.execute();
-      result = true;
-      prestmnt.close();
-      Database.closeConnection(conn);
+      
+      try (PreparedStatement prestmnt = conn.prepareStatement(whatToDo)) {
+        prestmnt.setString(1, csrfToken);
+        prestmnt.setString(2, userId);
+        log.debug("Executing: " + whatToDo);
+        prestmnt.execute();
+        result = true;
+      }
 
     } catch (SQLException e) {
       log.error("csrfChallenge7EnumTokens TokenUpdate Failure: " + e.toString());
     }
     return result;
   }
+
 
   /**
    * This method is used to set the status of all modules in a category to open or closed.
