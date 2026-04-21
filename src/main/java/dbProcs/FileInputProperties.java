@@ -28,10 +28,11 @@ public class FileInputProperties {
   public static String readPropFileClassLoader(String filename, String property)
       throws IOException {
 
-    InputStream input = FileInputProperties.class.getClassLoader().getResourceAsStream(filename);
-    Properties prop = new Properties();
-    prop.load(input);
+    try (InputStream input = FileInputProperties.class.getClassLoader().getResourceAsStream(filename)) {
+      Properties prop = new Properties();
+      prop.load(input);
 
-    return prop.getProperty(property);
+      return prop.getProperty(property);
+    }
   }
 }
