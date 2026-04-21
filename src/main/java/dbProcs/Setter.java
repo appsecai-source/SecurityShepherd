@@ -902,21 +902,25 @@ public class Setter {
       try {
         Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-        log.debug("Preparing userUpdateResult call");
-        CallableStatement callstmnt =
-            conn.prepareCall("call userUpdateResult(?, ?, ?, ?, ?, ?, ?)");
-        callstmnt.setString(1, moduleId);
-        callstmnt.setString(2, userId);
-        callstmnt.setInt(3, before);
-        callstmnt.setInt(4, after);
-        callstmnt.setInt(5, difficulty);
-        callstmnt.setBoolean(6, isOpen); // Only give points if CTF is open
-        callstmnt.setString(7, extra);
-        log.debug("Executing userUpdateResult");
-        callstmnt.execute();
-        // User Executed. Now Get the Level Name Langauge Key
-        result = Getter.getModuleNameLocaleKey(ApplicationRoot, moduleId);
-        Database.closeConnection(conn);
+        try {
+          log.debug("Preparing userUpdateResult call");
+          CallableStatement callstmnt =
+              conn.prepareCall("call userUpdateResult(?, ?, ?, ?, ?, ?, ?)");
+          callstmnt.setString(1, moduleId);
+          callstmnt.setString(2, userId);
+          callstmnt.setInt(3, before);
+          callstmnt.setInt(4, after);
+          callstmnt.setInt(5, difficulty);
+          callstmnt.setBoolean(6, isOpen); // Only give points if CTF is open
+          callstmnt.setString(7, extra);
+          log.debug("Executing userUpdateResult");
+          callstmnt.execute();
+          callstmnt.close();
+          // User Executed. Now Get the Level Name Langauge Key
+          result = Getter.getModuleNameLocaleKey(ApplicationRoot, moduleId);
+        } finally {
+          Database.closeConnection(conn);
+        }
 
       } catch (SQLException e) {
         log.error("userUpdateResult Failure: " + e.toString());
