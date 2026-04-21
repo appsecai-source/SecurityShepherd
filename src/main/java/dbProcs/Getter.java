@@ -1465,24 +1465,41 @@ public class Getter {
   public static String getModuleCategory(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleResult ***");
     String theCategory = null;
+    Connection conn = null;
+    PreparedStatement prepstmt = null;
+    ResultSet moduleFind = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      PreparedStatement prepstmt =
+      prepstmt =
           conn.prepareStatement("SELECT moduleCategory FROM modules WHERE moduleId = ?");
       prepstmt.setString(1, moduleId);
-      ResultSet moduleFind = prepstmt.executeQuery();
+      moduleFind = prepstmt.executeQuery();
       moduleFind.next();
       theCategory = moduleFind.getString(1);
-      Database.closeConnection(conn);
 
     } catch (Exception e) {
       log.error("Module did not exist: " + e.toString());
       theCategory = null;
+    } finally {
+      try {
+        if (moduleFind != null) {
+          moduleFind.close();
+        }
+        if (prepstmt != null) {
+          prepstmt.close();
+        }
+        if (conn != null) {
+          Database.closeConnection(conn);
+        }
+      } catch (Exception e) {
+        log.error("Error closing resources: " + e.toString());
+      }
     }
     log.debug("*** END getModuleCategory ***");
     return theCategory;
   }
+
 
   /**
    * @param applicationRoot The current running context of the application.
