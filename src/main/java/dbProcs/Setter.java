@@ -770,27 +770,26 @@ public class Setter {
     log.debug("*** Setter.updatePasswordAdmin ***");
 
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-      log.debug("Hashing password");
-
-      Argon2 argon2 = Argon2Factory.create();
-
-      String newHash = argon2.hash(10, 65536, 1, newPassword.toCharArray());
-
-      log.debug("Preparing userPasswordChangeAdmin call");
-      CallableStatement callstmnt = conn.prepareCall("call userPasswordChangeAdmin(?, ?)");
-      callstmnt.setString(1, userId);
-      callstmnt.setString(2, newHash);
-      log.debug("Executing userPasswordChangeAdmin");
-      callstmnt.execute();
-      result = true;
-      Database.closeConnection(conn);
-
-    } catch (SQLException e) {
-      log.error("updatePasswordAdmin Failure: " + e.toString());
-    }
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot)) { // L773
+ // L774
+      log.debug("Hashing password"); // L775
+ // L776
+      Argon2 argon2 = Argon2Factory.create(); // L777
+ // L778
+      String newHash = argon2.hash(10, 65536, 1, newPassword.toCharArray()); // L779
+ // L780
+      log.debug("Preparing userPasswordChangeAdmin call"); // L781
+      try (CallableStatement callstmnt = conn.prepareCall("call userPasswordChangeAdmin(?, ?)")) { // L782
+        callstmnt.setString(1, userId); // L783
+        callstmnt.setString(2, newHash); // L784
+        log.debug("Executing userPasswordChangeAdmin"); // L785
+        callstmnt.execute(); // L786
+        result = true; // L787
+      } // L788
+ // L789
+    } catch (SQLException e) { // L790
+      log.error("updatePasswordAdmin Failure: " + e.toString()); // L791
+    } // L792
     log.debug("*** END updatePasswordAdmin ***");
     return result;
   }
