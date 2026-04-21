@@ -634,19 +634,19 @@ public class Setter {
    * @param moduleId The identifier of the module to increment the counter of
    * @param userId The user to be incremented
    * @return Boolean reflecting the success of the operation
-   */
   public static boolean updateCsrfCounter(String ApplicationRoot, String moduleId, String userId) {
     log.debug("*** Getter.updateCsrfCounter ***");
     boolean result = false;
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call resultMessagePlus(?, ?)");
-      log.debug("Preparing resultMessagePlus procedure");
-      callstmt.setString(1, moduleId);
-      callstmt.setString(2, userId);
-      callstmt.execute();
-      result = true;
+      try (CallableStatement callstmt = conn.prepareCall("call resultMessagePlus(?, ?)")) {
+        log.debug("Preparing resultMessagePlus procedure");
+        callstmt.setString(1, moduleId);
+        callstmt.setString(2, userId);
+        callstmt.execute();
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -655,6 +655,7 @@ public class Setter {
     log.debug("*** END updateCsrfCounter ***");
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
