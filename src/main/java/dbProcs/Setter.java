@@ -1026,46 +1026,48 @@ public class Setter {
     log.debug("userRole = " + userRole);
     log.debug("userAddress = " + userAddress);
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
+      log.debug("Hashing password");
 
-    log.debug("Hashing password");
+      Argon2 argon2 = Argon2Factory.create();
 
-    Argon2 argon2 = Argon2Factory.create();
+      String hash = argon2.hash(10, 65536, 1, userPass.toCharArray());
+      // TODO: wipe password from memory after hashing
 
-    String hash = argon2.hash(10, 65536, 1, userPass.toCharArray());
-    // TODO: wipe password from memory after hashing
+      log.debug("Executing userCreate procedure on Database");
+      CallableStatement callstmt = conn.prepareCall("call userCreate(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      callstmt.setString(1, classId);
+      callstmt.setString(2, userName);
+      callstmt.setString(3, hash);
+      callstmt.setString(4, userRole);
+      callstmt.setString(5, null); // ssoName
+      callstmt.setString(6, userAddress);
+      callstmt.setString(7, "login"); // login type
+      callstmt.setBoolean(8, tempPass);
+      callstmt.setBoolean(9, false); // Tempname
 
-    log.debug("Executing userCreate procedure on Database");
-    CallableStatement callstmt = conn.prepareCall("call userCreate(?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    callstmt.setString(1, classId);
-    callstmt.setString(2, userName);
-    callstmt.setString(3, hash);
-    callstmt.setString(4, userRole);
-    callstmt.setString(5, null); // ssoName
-    callstmt.setString(6, userAddress);
-    callstmt.setString(7, "login"); // login type
-    callstmt.setBoolean(8, tempPass);
-    callstmt.setBoolean(9, false); // Tempname
+      ResultSet registerAttempt = callstmt.executeQuery();
+      log.debug("Opening result set");
 
-    ResultSet registerAttempt = callstmt.executeQuery();
-    log.debug("Opening result set");
+      registerAttempt.next(); // Procedure Ran correctly
 
-    registerAttempt.next(); // Procedure Ran correctly
-
-    if (registerAttempt.getString(1) == null) {
-      // Registration success
-      log.debug("Register Success");
-      result = true;
-    } else {
-      // Registration failure
-      result = false;
-      log.debug("ResultSet contained -> " + registerAttempt.getString(1));
-      throw new SQLException(registerAttempt.getString(1));
+      if (registerAttempt.getString(1) == null) {
+        // Registration success
+        log.debug("Register Success");
+        result = true;
+      } else {
+        // Registration failure
+        result = false;
+        log.debug("ResultSet contained -> " + registerAttempt.getString(1));
+        throw new SQLException(registerAttempt.getString(1));
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
-
-    Database.closeConnection(conn);
     log.debug("*** END userCreate ***");
 
     return result;
+
   }
 
   public static String userCreateSSO(
