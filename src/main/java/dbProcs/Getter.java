@@ -1523,24 +1523,46 @@ public class Getter {
     log.debug("*** Getter.getModuleIdFromHash ***");
     log.debug("Getting ID from Hash: " + moduleHash);
     String result = new String();
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetIdFromHash(?)");
+      callstmt = conn.prepareCall("call moduleGetIdFromHash(?)");
       log.debug("Gathering moduleGetIdFromHash ResultSet");
       callstmt.setString(1, moduleHash);
-      ResultSet resultSet = callstmt.executeQuery();
+      resultSet = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleGetIdFromHash");
       resultSet.next();
       result = resultSet.getString(1);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
       result = null;
+    } finally {
+      try {
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close ResultSet: " + e.toString());
+      }
+      try {
+        if (callstmt != null) {
+          callstmt.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close CallableStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getModuleIdFromHash ***");
     return result;
+  }
+
   }
 
   /**
