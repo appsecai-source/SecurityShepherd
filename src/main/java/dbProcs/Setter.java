@@ -76,17 +76,16 @@ public class Setter {
     log.debug("*** Setter.classCreate ***");
 
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    boolean result = false;
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call classCreate(?, ?)")) {
 
       log.debug("Preparing classCreate call");
-      CallableStatement callstmnt = conn.prepareCall("call classCreate(?, ?)");
       callstmnt.setString(1, className);
       callstmnt.setString(2, classYear);
       log.debug("Executing classCreate");
       callstmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("classCreate Failure: " + e.toString());
