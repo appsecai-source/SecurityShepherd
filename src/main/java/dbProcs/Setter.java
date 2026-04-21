@@ -834,22 +834,21 @@ public class Setter {
    * @param ApplicationRoot The current running context of the application
    * @param playerId The identifier of the player to be assigned to class NULL
    * @return The userName that was updated
-   */
   public static String updatePlayerClassToNull(String ApplicationRoot, String playerId) {
     log.debug("*** Setter.updatePlayerClassToNull ***");
 
     String result = null;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)")) {
 
       log.debug("Preparing playerUpdateClassToNull call");
-      CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)");
       callstmnt.setString(1, playerId);
       log.debug("Executing playerUpdateClassToNull");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("updatePlayerClassToNull Failure: " + e.toString());
@@ -858,6 +857,7 @@ public class Setter {
     log.debug("*** END updatePlayerClassToNull ***");
     return result;
   }
+
 
   /**
    * Updates a users result of a specific module
