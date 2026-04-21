@@ -802,31 +802,51 @@ public class Setter {
    * @param classId New class to be assigned to
    * @param playerId Player to be assigned to new class
    * @return The userName that was updated
-   */
   public static String updatePlayerClass(String ApplicationRoot, String classId, String playerId) {
     log.debug("*** Setter.updatePlayerClass ***");
 
     String result = null;
+    Connection conn = null;
+    CallableStatement callstmnt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Preparing playerUpdateClass call");
-      CallableStatement callstmnt = conn.prepareCall("call playerUpdateClass(?, ?)");
+      callstmnt = conn.prepareCall("call playerUpdateClass(?, ?)");
       callstmnt.setString(1, playerId);
       callstmnt.setString(2, classId);
       log.debug("Executing playerUpdateClass");
-      ResultSet resultSet = callstmnt.executeQuery();
+      resultSet = callstmnt.executeQuery();
       resultSet.next();
       result = resultSet.getString(1);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("playerUpdateClass Failure: " + e.toString());
       result = null;
+    } finally {
+      try {
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (SQLException e) {
+        log.error("Error closing ResultSet: " + e.toString());
+      }
+      try {
+        if (callstmnt != null) {
+          callstmnt.close();
+        }
+      } catch (SQLException e) {
+        log.error("Error closing CallableStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END updatePlayerClass ***");
     return result;
   }
+
 
   /**
    * Updates a PLAYER's class identifier to null
