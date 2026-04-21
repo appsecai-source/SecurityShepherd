@@ -1232,23 +1232,24 @@ public class Setter {
     log.debug("*** Setter.setPlayerCheatStatus ***");
     log.debug("playerCheatsEnabled = " + playerCheatsEnabled);
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = Database.getCoreConnection(ApplicationRoot); // L1235
+ // L1236
+    try { // L1237
+      log.debug("Setting player cheat setting"); // L1238
+      PreparedStatement callPlayerSetting = // L1239
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?"); // L1240
+      callPlayerSetting.setBoolean(1, playerCheatsEnabled); // L1241
+      callPlayerSetting.setString(2, "playerCheatsEnabled"); // L1242
+ // L1243
+      if (callPlayerSetting.executeUpdate() == 1) { // L1244
+        result = true; // L1245
+      } else { // L1246
+        throw new RuntimeException("Could not set player cheat setting"); // L1247
+      } // L1248
+    } finally { // L1249
+      Database.closeConnection(conn); // L1250
+    } // L1251
 
-    log.debug("Setting player cheat setting");
-    PreparedStatement callPlayerSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    callPlayerSetting.setBoolean(1, playerCheatsEnabled);
-    callPlayerSetting.setString(2, "playerCheatsEnabled");
-
-    if (callPlayerSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set player cheat setting");
-    }
-
-    Database.closeConnection(conn);
-    log.debug("*** END setPlayerCheatStatus ***");
-    return result;
   }
 
   public static boolean setModuleLayout(String ApplicationRoot, String theModuleLayout)
