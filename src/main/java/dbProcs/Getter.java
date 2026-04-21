@@ -742,47 +742,58 @@ public class Getter {
     String htmlOutput = new String();
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
+      
+      try {
+        if (classId != null) {
+          CallableStatement callstmt = conn.prepareCall("call resultMessageByClass(?, ?)");
+          try {
+            log.debug("Gathering resultMessageByClass ResultSet");
+            callstmt.setString(1, classId);
+            callstmt.setString(2, moduleId);
+            ResultSet resultSet = callstmt.executeQuery();
+            try {
+              log.debug("resultMessageByClass executed");
 
-      if (classId != null) {
-        CallableStatement callstmt = conn.prepareCall("call resultMessageByClass(?, ?)");
-        log.debug("Gathering resultMessageByClass ResultSet");
-        callstmt.setString(1, classId);
-        callstmt.setString(2, moduleId);
-        ResultSet resultSet = callstmt.executeQuery();
-        log.debug("resultMessageByClass executed");
+              // Table Header
+              htmlOutput =
+                  "<table><tr><th>"
+                      + bundle.getString("forum.userName")
+                      + "</th><th>"
+                      + bundle.getString("forum.message")
+                      + "</th></tr>";
 
-        // Table Header
-        htmlOutput =
-            "<table><tr><th>"
-                + bundle.getString("forum.userName")
-                + "</th><th>"
-                + bundle.getString("forum.message")
-                + "</th></tr>";
-
-        log.debug("Opening Result Set from resultMessageByClass");
-        int counter = 0;
-        while (resultSet.next()) {
-          counter++;
-          // Table content
-          htmlOutput +=
-              "<tr><td>"
-                  + Encode.forHtml(resultSet.getString(1))
-                  + "</td><td><iframe sandbox=\"allow-scripts allow-forms\" src=\""
-                  + Encode.forHtmlAttribute(resultSet.getString(2))
-                  + "\"></iframe></td></tr>";
-        }
-        if (counter > 0) {
-          log.debug("Added a " + counter + " row table");
+              log.debug("Opening Result Set from resultMessageByClass");
+              int counter = 0;
+              while (resultSet.next()) {
+                counter++;
+                // Table content
+                htmlOutput +=
+                    "<tr><td>"
+                        + Encode.forHtml(resultSet.getString(1))
+                        + "</td><td><iframe sandbox=\"allow-scripts allow-forms\" src=\""
+                        + Encode.forHtmlAttribute(resultSet.getString(2))
+                        + "\"></iframe></td></tr>";
+              }
+              if (counter > 0) {
+                log.debug("Added a " + counter + " row table");
+              } else {
+                log.debug("No results from query");
+              }
+              // Table end
+              htmlOutput += "</table>";
+            } finally {
+              resultSet.close();
+            }
+          } finally {
+            callstmt.close();
+          }
         } else {
-          log.debug("No results from query");
+          log.error("User with Null Class detected");
+          htmlOutput = "<p><font color='red'>" + bundle.getString("error.noClass") + "</font></p>";
         }
-        // Table end
-        htmlOutput += "</table>";
-      } else {
-        log.error("User with Null Class detected");
-        htmlOutput = "<p><font color='red'>" + bundle.getString("error.noClass") + "</font></p>";
+      } finally {
+        Database.closeConnection(conn);
       }
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
@@ -792,6 +803,7 @@ public class Getter {
     }
     log.debug("*** END getCsrfForum ***");
     return htmlOutput;
+  }
   }
 
   /**
