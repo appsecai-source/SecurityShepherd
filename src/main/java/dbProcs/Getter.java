@@ -1085,10 +1085,9 @@ public class Getter {
     ResourceBundle bundle = ResourceBundle.getBundle("i18n.text", locale);
     ResourceBundle levelNames = ResourceBundle.getBundle("i18n.moduleGenerics.moduleNames", locale);
 
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call moduleIncrementalInfo(?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call moduleIncrementalInfo(?)");
       callstmt.setString(1, userId);
       log.debug("Gathering moduleIncrementalInfo ResultSet");
       ResultSet modules = callstmt.executeQuery();
@@ -1160,8 +1159,6 @@ public class Getter {
         // output += "</ul></li>"; //Commented Out to prevent Search Box being pushed
         // into Footer
       }
-
-      Database.closeConnection(conn);
 
     } catch (Exception e) {
       log.error("Challenge Retrieval: " + e.toString());
