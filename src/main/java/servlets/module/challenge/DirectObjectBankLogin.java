@@ -315,7 +315,6 @@ public class DirectObjectBankLogin extends HttpServlet {
    * @param applicationRoot Running Context of the application
    * @return Returns a Float Value representing the balance
    * @throws SQLException If no rows found or if SQL error occurs
-   */
   public static long getAccountBalance(String accountNumber, String applicationRoot)
       throws SQLException {
     Connection conn = Database.getChallengeConnection(applicationRoot, "directObjectBank");
@@ -333,8 +332,10 @@ public class DirectObjectBankLogin extends HttpServlet {
       }
     } catch (SQLException e) {
       throw e;
+    } finally {
+      conn.close();
     }
-    conn.close();
     return toReturn;
   }
+
 }
