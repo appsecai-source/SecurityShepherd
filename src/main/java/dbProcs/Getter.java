@@ -1983,8 +1983,9 @@ public class Getter {
     log.debug("*** Getter.getProgressJSON ***");
 
     String result = new String();
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
       log.debug("Preparing userProgress call");
       // Returns User's: Name, # of Completed modules and Score
@@ -2015,7 +2016,6 @@ public class Getter {
       } else {
         result = new String();
       }
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("getProgressJSON Failure: " + e.toString());
@@ -2023,10 +2023,15 @@ public class Getter {
     } catch (Exception e) {
       log.error("getProgressJSON Unexpected Failure: " + e.toString());
       result = null;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getProgressJSON ***");
     return result;
   }
+
 
   private static int getTounnamentSectionFromRankNumber(int rankNumber) {
     if (rankNumber < fieldTrainingCap) {
