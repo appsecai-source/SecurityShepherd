@@ -1468,12 +1468,13 @@ public class Getter {
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      PreparedStatement prepstmt =
-          conn.prepareStatement("SELECT moduleCategory FROM modules WHERE moduleId = ?");
-      prepstmt.setString(1, moduleId);
-      ResultSet moduleFind = prepstmt.executeQuery();
-      moduleFind.next();
-      theCategory = moduleFind.getString(1);
+      try (PreparedStatement prepstmt =
+          conn.prepareStatement("SELECT moduleCategory FROM modules WHERE moduleId = ?")) {
+        prepstmt.setString(1, moduleId);
+        ResultSet moduleFind = prepstmt.executeQuery();
+        moduleFind.next();
+        theCategory = moduleFind.getString(1);
+      }
       Database.closeConnection(conn);
 
     } catch (Exception e) {
@@ -1483,6 +1484,7 @@ public class Getter {
     log.debug("*** END getModuleCategory ***");
     return theCategory;
   }
+
 
   /**
    * @param applicationRoot The current running context of the application.
