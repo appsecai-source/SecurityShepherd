@@ -2593,25 +2593,28 @@ public class Getter {
     log.debug("*** Getter.getRegistrationStatus ***");
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
+      log.debug("Getting registration status setting");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    log.debug("Getting registration status setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      callstmt.setString(1, "openRegistration");
 
-    callstmt.setString(1, "openRegistration");
+      ResultSet registrationResult = callstmt.executeQuery();
 
-    ResultSet registrationResult = callstmt.executeQuery();
+      registrationResult.next();
 
-    registrationResult.next();
+      theRegistrationStatus = registrationResult.getBoolean(1);
 
-    theRegistrationStatus = registrationResult.getBoolean(1);
+      log.debug("Value found: " + theRegistrationStatus);
 
-    log.debug("Value found: " + theRegistrationStatus);
-
-    Database.closeConnection(conn);
+    } finally {
+      Database.closeConnection(conn);
+    }
     log.debug("*** END getRegistrationStatus ***");
     return theRegistrationStatus;
   }
+
 
   public static String getScoreboardStatus(String ApplicationRoot) throws SQLException {
     String theScoreboardStatus = "";
