@@ -390,39 +390,38 @@ public class Setter {
    * @param csrfToken CSRF Token to add to the csrfChallengeSix DB Schema
    * @param ApplicationRoot Running context of the application
    * @return
-   */
   public static boolean setCsrfChallengeSevenCsrfToken(
       String userId, String csrfToken, String ApplicationRoot) {
     log.debug("*** setCsrfChallengeSevenToken ***");
     boolean result = false;
+    Connection conn = null;
+    PreparedStatement prestmnt = null;
+    ResultSet rs = null;
     try {
-      Connection conn =
-          Database.getChallengeConnection(ApplicationRoot, "csrfChallengeEnumerateTokens");
+      conn = Database.getChallengeConnection(ApplicationRoot, "csrfChallengeEnumerateTokens");
 
       boolean updateToken = false;
       log.debug("Preparing setCsrfChallengeSevenToken call");
-      PreparedStatement prestmnt =
-          conn.prepareStatement("SELECT csrfTokenscol FROM csrfTokens WHERE userId = ?");
+      prestmnt = conn.prepareStatement("SELECT csrfTokenscol FROM csrfTokens WHERE userId = ?");
       prestmnt.setString(1, userId);
       log.debug("Executing setCsrfChallengeSevenToken");
-      ResultSet rs = prestmnt.executeQuery();
+      rs = prestmnt.executeQuery();
       if (rs.next()) {
-        // Need to Update CSRF token rather than Insert
         log.debug("CSRF token Found for Challenge 7... Updating");
         updateToken = true;
       } else {
         log.debug("No CSRF token Found for Challenge 7... Creating");
       }
       rs.close();
+      rs = null;
+      prestmnt.close();
+      prestmnt = null;
 
       String whatToDo;
       if (updateToken) {
-        whatToDo =
-            "UPDATE `csrfChallengeEnumTokens`.`csrfTokens` SET csrfTokenscol = ? WHERE userId = ?";
+        whatToDo = "UPDATE `csrfChallengeEnumTokens`.`csrfTokens` SET csrfTokenscol = ? WHERE userId = ?";
       } else {
-        whatToDo =
-            "INSERT INTO `csrfChallengeEnumTokens`.`csrfTokens` (`csrfTokenscol`, `userId`) VALUES"
-                + " (?, ?)";
+        whatToDo = "INSERT INTO `csrfChallengeEnumTokens`.`csrfTokens` (`csrfTokenscol`, `userId`) VALUES (?, ?)";
       }
       prestmnt = conn.prepareStatement(whatToDo);
       prestmnt.setString(1, csrfToken);
@@ -430,14 +429,22 @@ public class Setter {
       log.debug("Executing: " + whatToDo);
       prestmnt.execute();
       result = true;
-      prestmnt.close();
-      Database.closeConnection(conn);
-
     } catch (SQLException e) {
       log.error("csrfChallenge7EnumTokens TokenUpdate Failure: " + e.toString());
+    } finally {
+      if (rs != null) {
+        try { rs.close(); } catch (SQLException e) { /* ignore */ }
+      }
+      if (prestmnt != null) {
+        try { prestmnt.close(); } catch (SQLException e) { /* ignore */ }
+      }
+      if (conn != null) {
+        try { Database.closeConnection(conn); } catch (Exception e) { /* ignore */ }
+      }
     }
     return result;
   }
+
 
   /**
    * This method is used to set the status of all modules in a category to open or closed.
