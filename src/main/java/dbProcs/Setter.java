@@ -539,7 +539,6 @@ public class Setter {
    * @param userId The identifier of the user in which to store the attack under
    * @param moduleId The module identifier of which to store the message under
    * @return A boolean value reflecting the success of the function
-   */
   public static boolean setStoredMessage(
       String ApplicationRoot, String message, String userId, String moduleId) {
     log.debug("*** Setter.setStoredMessage ***");
@@ -547,14 +546,15 @@ public class Setter {
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call resultMessageSet(?, ?, ?)");
-      log.debug("Preparing resultMessageSet procedure");
-      callstmt.setString(1, message);
-      callstmt.setString(2, userId);
-      callstmt.setString(3, moduleId);
-      callstmt.execute();
-      log.debug("Executed resultMessageSet");
-      result = true;
+      try (CallableStatement callstmt = conn.prepareCall("call resultMessageSet(?, ?, ?)")) {
+        log.debug("Preparing resultMessageSet procedure");
+        callstmt.setString(1, message);
+        callstmt.setString(2, userId);
+        callstmt.setString(3, moduleId);
+        callstmt.execute();
+        log.debug("Executed resultMessageSet");
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -563,6 +563,7 @@ public class Setter {
     log.debug("*** END setStoredMessage ***");
     return result;
   }
+
 
   /**
    * Sets user to suspended in the database for a specific amount of time. This prevents them from
