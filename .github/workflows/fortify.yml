@@ -185,7 +185,8 @@ jobs:
       FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
       FOD_SEVERITY_STRINGS: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical,High' }}
       FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
-      GITHUB_TOKEN: ${{ github.token }}
+      # Use a PAT if provided; otherwise fall back to the workflow token.
+      GITHUB_TOKEN: ${{ secrets.REMEDIATION_GITHUB_TOKEN || github.token }}
       GITHUB_REPOSITORY: ${{ github.repository }}
       PR_NUMBER: ${{ needs.resolve-pr-context.outputs.pr_number }}
       GITHUB_BASE_REF: ${{ needs.resolve-pr-context.outputs.base_ref }}
