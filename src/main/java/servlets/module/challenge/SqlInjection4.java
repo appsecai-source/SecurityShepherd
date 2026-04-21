@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -91,15 +92,12 @@ public class SqlInjection4 extends HttpServlet {
 
         log.debug("Getting Connection to Database");
         Connection conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeFour");
-        Statement stmt = conn.createStatement();
         log.debug("Gathering result set");
-        ResultSet resultSet =
-            stmt.executeQuery(
-                "SELECT userName FROM users WHERE userName = '"
-                    + theUserName
-                    + "' AND userPassword = '"
-                    + thePassword
-                    + "'");
+        String query = "SELECT userName FROM users WHERE userName = ? AND userPassword = ?";
+        PreparedStatement pstmt = conn.prepareStatement(query);
+        pstmt.setString(1, theUserName);
+        pstmt.setString(2, thePassword);
+        ResultSet resultSet = pstmt.executeQuery();
 
         int i = 0;
         htmlOutput = "<h2 class='title'>" + bundle.getString("response.loginResults") + "</h2>";
