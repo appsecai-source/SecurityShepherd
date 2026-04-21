@@ -192,33 +192,34 @@ public class Setter {
    *
    * @param ApplicationRoot Used to locate database properties file
    * @return
+  /**
+   * This is used to only open Mobile category levels
+   *
+   * @param ApplicationRoot Used to locate database properties file
+   * @return
    */
   public static boolean openOnlyMobileCategories(String ApplicationRoot) {
     log.debug("*** Setter.openOnlyMobileCategories ***");
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement prepstmt1 = conn.prepareStatement(
+             "UPDATE modules SET moduleStatus = 'closed' WHERE " + webModuleCategoryHardcodedWhereClause);
+         PreparedStatement prepstmt2 = conn.prepareStatement(
+             "UPDATE modules SET moduleStatus = 'open' WHERE " + mobileModuleCategoryHardcodedWhereClause)) {
 
-      PreparedStatement prepstmt =
-          conn.prepareStatement(
-              "UPDATE modules SET moduleStatus = 'closed' WHERE "
-                  + webModuleCategoryHardcodedWhereClause);
-      prepstmt.execute();
+      prepstmt1.execute();
       log.debug("Web Levels have been closed");
-      prepstmt =
-          conn.prepareStatement(
-              "UPDATE modules SET moduleStatus = 'open' WHERE "
-                  + mobileModuleCategoryHardcodedWhereClause);
-      prepstmt.execute();
+      prepstmt2.execute();
       log.debug("Mobile Levels have been opened");
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not only open Mobile Levels: " + e.toString());
     }
     log.debug("*** END openOnlyMobileCategories ***");
     return result;
+  }
+
   }
 
   /**
