@@ -77,6 +77,9 @@ public class SqlInjection1 extends HttpServlet {
 
       String htmlOutput = new String();
 
+      Connection conn = null;
+      Statement stmt = null;
+      ResultSet resultSet = null;
       try {
         String aUserId = request.getParameter("aUserId");
         log.debug("User Submitted - " + aUserId);
@@ -84,11 +87,10 @@ public class SqlInjection1 extends HttpServlet {
         log.debug("Servlet root = " + ApplicationRoot);
 
         log.debug("Getting Connection to Database");
-        Connection conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeOne");
-        Statement stmt = conn.createStatement();
+        conn = Database.getChallengeConnection(ApplicationRoot, "SqlChallengeOne");
+        stmt = conn.createStatement();
         log.debug("Gathering result set");
-        ResultSet resultSet =
-            stmt.executeQuery("SELECT * FROM customers WHERE customerId = \"" + aUserId + "\"");
+        resultSet = stmt.executeQuery("SELECT * FROM customers WHERE customerId = \"" + aUserId + "\"");
 
         int i = 0;
         htmlOutput = "<h2 class='title'>" + bundle.getString("response.searchResults") + "</h2>";
@@ -130,6 +132,28 @@ public class SqlInjection1 extends HttpServlet {
       } catch (Exception e) {
         out.write(errors.getString("error.funky"));
         log.fatal(levelName + " - " + e.toString());
+      } finally {
+        if (resultSet != null) {
+          try {
+            resultSet.close();
+          } catch (SQLException e) {
+            log.error("Error closing ResultSet: " + e.toString());
+          }
+        }
+        if (stmt != null) {
+          try {
+            stmt.close();
+          } catch (SQLException e) {
+            log.error("Error closing Statement: " + e.toString());
+          }
+        }
+        if (conn != null) {
+          try {
+            conn.close();
+          } catch (SQLException e) {
+            log.error("Error closing Connection: " + e.toString());
+          }
+        }
       }
       log.debug("Outputting HTML");
       out.write(htmlOutput);
