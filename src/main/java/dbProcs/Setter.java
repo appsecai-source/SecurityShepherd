@@ -1523,21 +1523,26 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting end time");
-    PreparedStatement endTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    endTimeStatement.setString(1, theEndTime.toString());
-    endTimeStatement.setString(2, "endTime");
+    try {
+      log.debug("Setting end time");
+      PreparedStatement endTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      endTimeStatement.setString(1, theEndTime.toString());
+      endTimeStatement.setString(2, "endTime");
 
-    if (endTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set end time to " + theEndTime);
+      if (endTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set end time to " + theEndTime);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setEndTime ***");
     return result;
+  }
+
   }
 
   public static boolean setDefaultClass(String ApplicationRoot, String theDefaultClass)
