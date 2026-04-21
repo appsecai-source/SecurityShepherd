@@ -1473,22 +1473,26 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting lock time");
-    PreparedStatement lockTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    lockTimeStatement.setString(1, theLockTime.toString());
-    lockTimeStatement.setString(2, "lockTime");
+    try {
+      log.debug("Setting lock time");
+      PreparedStatement lockTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      lockTimeStatement.setString(1, theLockTime.toString());
+      lockTimeStatement.setString(2, "lockTime");
 
-    if (lockTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set lock time to " + theLockTime);
+      if (lockTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set lock time to " + theLockTime);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setLockTime ***");
     return result;
   }
+
 
   public static boolean setEndTimeStatus(String ApplicationRoot, boolean theEndTimeStatus)
       throws SQLException {
