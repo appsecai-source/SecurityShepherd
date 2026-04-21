@@ -1548,20 +1548,24 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting default class");
-    PreparedStatement endTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    endTimeStatement.setString(1, theDefaultClass);
-    endTimeStatement.setString(2, "defaultClass");
+    try {
+      log.debug("Setting default class");
+      PreparedStatement endTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      endTimeStatement.setString(1, theDefaultClass);
+      endTimeStatement.setString(2, "defaultClass");
 
-    if (endTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set default class to " + theDefaultClass);
+      if (endTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set default class to " + theDefaultClass);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setDefaultClass ***");
     return result;
   }
+
 }
