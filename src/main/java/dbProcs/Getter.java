@@ -1642,22 +1642,21 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param moduleHash The hash to use for module look up
    * @return The db stored solution key value for the moduleHash submited
-   */
   public static String getModuleResultFromHash(String ApplicationRoot, String moduleHash) {
     log.debug("*** Getter.getModuleResultFromHash ***");
     String result = new String();
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call moduleGetResultFromHash(?)")) {
 
       log.debug("hash '" + moduleHash + "'");
-      CallableStatement callstmt = conn.prepareCall("call moduleGetResultFromHash(?)");
       log.debug("Gathering moduleGetResultFromHash ResultSet");
       callstmt.setString(1, moduleHash);
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from moduleGetResultFromHash");
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from moduleGetResultFromHash");
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
@@ -1666,6 +1665,7 @@ public class Getter {
     log.debug("*** END getModuleResultFromHash ***");
     return result;
   }
+
 
   /**
    * Used in creating functionality that requires a user to select a module. This method only
