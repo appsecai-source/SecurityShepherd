@@ -104,15 +104,12 @@ public class Setter {
   public static boolean closeAllModules(String ApplicationRoot) {
     log.debug("*** Setter.closeAllModules ***");
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement callstmt = conn.prepareStatement("UPDATE modules SET moduleStatus = 'closed'")) {
 
-      PreparedStatement callstmt =
-          conn.prepareStatement("UPDATE modules SET moduleStatus = 'closed'");
       callstmt.execute();
       log.debug("All modules Set to closed");
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not close all modules: " + e.toString());
