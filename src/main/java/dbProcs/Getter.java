@@ -1523,17 +1523,16 @@ public class Getter {
     log.debug("*** Getter.getModuleIdFromHash ***");
     log.debug("Getting ID from Hash: " + moduleHash);
     String result = new String();
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call moduleGetIdFromHash(?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetIdFromHash(?)");
       log.debug("Gathering moduleGetIdFromHash ResultSet");
       callstmt.setString(1, moduleHash);
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from moduleGetIdFromHash");
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from moduleGetIdFromHash");
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
@@ -1542,6 +1541,7 @@ public class Getter {
     log.debug("*** END getModuleIdFromHash ***");
     return result;
   }
+
 
   /**
    * Returns true if a module has a hard coded key, false if server encrypts it
