@@ -1611,30 +1611,50 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param moduleId Identifier of module
    * @return The db stored solution key value for the moduleId submitted
-   */
   public static String getModuleResult(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleResult ***");
     String moduleFound = null;
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet moduleFind = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetResult(?)");
+      callstmt = conn.prepareCall("call moduleGetResult(?)");
       log.debug("Gathering moduleGetResult ResultSet");
       callstmt.setString(1, moduleId);
-      ResultSet moduleFind = callstmt.executeQuery();
+      moduleFind = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleGetResult");
       moduleFind.next();
       log.debug("Module " + moduleFind.getString(1) + " Found");
       moduleFound = moduleFind.getString(2);
-      Database.closeConnection(conn);
 
     } catch (Exception e) {
       log.error("Module did not exist: " + e.toString());
       moduleFound = null;
+    } finally {
+      try {
+        if (moduleFind != null) {
+          moduleFind.close();
+        }
+      } catch (SQLException e) {
+        log.error("Error closing ResultSet: " + e.toString());
+      }
+      try {
+        if (callstmt != null) {
+          callstmt.close();
+        }
+      } catch (SQLException e) {
+        log.error("Error closing CallableStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getModuleResult ***");
     return moduleFound;
   }
+
 
   /**
    * Returns the result key for a module using the module's hash for the lookup procedure.
