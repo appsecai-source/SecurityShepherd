@@ -227,14 +227,13 @@ public class Setter {
    * @param ApplicationRoot Used to locate database properties file
    * @param unsafe Used to track if the level is deemed unsafe or safe
    * @return
-   */
   public static boolean openOnlyWebCategories(String ApplicationRoot, int unsafe) {
     log.debug("*** Setter.openOnlyWebCategories ***");
     boolean result = false;
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      PreparedStatement prepstmt =
+      try (PreparedStatement prepstmt1 =
           conn.prepareStatement(
               "UPDATE modules SET moduleStatus = 'open' WHERE "
                   + "("
@@ -242,15 +241,16 @@ public class Setter {
                   + ")"
                   + " AND isUnsafe = "
                   + unsafe);
-      prepstmt.execute();
-      log.debug("Web Levels have been opened");
-      prepstmt =
-          conn.prepareStatement(
-              "UPDATE modules SET moduleStatus = 'closed' WHERE "
-                  + mobileModuleCategoryHardcodedWhereClause);
-      prepstmt.execute();
-      log.debug("Mobile Levels have been closed");
-      result = true;
+          PreparedStatement prepstmt2 =
+              conn.prepareStatement(
+                  "UPDATE modules SET moduleStatus = 'closed' WHERE "
+                      + mobileModuleCategoryHardcodedWhereClause)) {
+        prepstmt1.execute();
+        log.debug("Web Levels have been opened");
+        prepstmt2.execute();
+        log.debug("Mobile Levels have been closed");
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -259,6 +259,7 @@ public class Setter {
     log.debug("*** END openOnlyWebCategories ***");
     return result;
   }
+
 
   /**
    * Resets user bad submission counter to 0
