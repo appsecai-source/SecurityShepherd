@@ -1261,21 +1261,23 @@ public class Setter {
       throw new IllegalArgumentException("Invalid module layout: " + theModuleLayout);
     }
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-    log.debug("Setting player cheat setting");
-    PreparedStatement moduleLayoutSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    moduleLayoutSetting.setString(1, theModuleLayout);
-    moduleLayoutSetting.setString(2, "modulelayout");
-
-    if (moduleLayoutSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set module layout to " + theModuleLayout);
-    }
-
-    Database.closeConnection(conn);
+    Connection conn = Database.getCoreConnection(ApplicationRoot); // L1264
+ // L1265
+    try { // L1266
+      log.debug("Setting player cheat setting"); // L1267
+      PreparedStatement moduleLayoutSetting = // L1268
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?"); // L1269
+      moduleLayoutSetting.setString(1, theModuleLayout); // L1270
+      moduleLayoutSetting.setString(2, "modulelayout"); // L1271
+ // L1272
+      if (moduleLayoutSetting.executeUpdate() == 1) { // L1273
+        result = true; // L1274
+      } else { // L1275
+        throw new RuntimeException("Could not set module layout to " + theModuleLayout); // L1276
+      } // L1277
+    } finally { // L1278
+      Database.closeConnection(conn); // L1279
+    } // L1280
     log.debug("*** END setModulelayout ***");
     return result;
   }
