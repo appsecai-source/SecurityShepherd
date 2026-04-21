@@ -429,17 +429,20 @@ public class Setup extends HttpServlet {
     String data = FileUtils.readFileToString(file, Charset.defaultCharset());
 
     log.debug("Initializing core database");
-    Connection databaseConnection = Database.getDatabaseConnection(null, true);
-    Statement psProcToexecute = databaseConnection.createStatement();
-    psProcToexecute.executeUpdate(data);
+    
+    try (Connection databaseConnection = Database.getDatabaseConnection(null, true);
+         Statement psProcToexecute = databaseConnection.createStatement()) {
+      psProcToexecute.executeUpdate(data);
 
-    file =
-        new File(getClass().getClassLoader().getResource("/database/moduleSchemas.sql").getFile());
-    data = FileUtils.readFileToString(file, Charset.defaultCharset());
-    log.debug("Initializing module database");
+      file =
+          new File(getClass().getClassLoader().getResource("/database/moduleSchemas.sql").getFile());
+      data = FileUtils.readFileToString(file, Charset.defaultCharset());
+      log.debug("Initializing module database");
 
-    psProcToexecute = databaseConnection.createStatement();
-    psProcToexecute.executeUpdate(data);
+      try (Statement psProcToexecute2 = databaseConnection.createStatement()) {
+        psProcToexecute2.executeUpdate(data);
+      }
+    }
   }
 
   private synchronized void executeMongoScript() throws IOException {
