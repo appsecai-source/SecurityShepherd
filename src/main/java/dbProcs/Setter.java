@@ -1079,96 +1079,103 @@ public class Setter {
     log.debug("ssoName = " + ssoName);
     // We don't log passwords
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-    String newUsername = userName;
-
+    Connection conn = null;
     try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      log.debug("Checking for duplicate usernames");
+      String newUsername = userName;
 
-      boolean isDuplicate = true;
+      try {
 
-      int duplicateCounter = 0;
+        log.debug("Checking for duplicate usernames");
 
-      while (isDuplicate) {
+        boolean isDuplicate = true;
 
-        PreparedStatement prestmt =
-            conn.prepareStatement("SELECT ssoName FROM `users` WHERE userName = ?");
+        int duplicateCounter = 0;
 
-        prestmt.setString(1, newUsername);
+        while (isDuplicate) {
 
-        ResultSet checkDuplicate = prestmt.executeQuery();
+          PreparedStatement prestmt =
+              conn.prepareStatement("SELECT ssoName FROM `users` WHERE userName = ?");
+
+          prestmt.setString(1, newUsername);
+
+          ResultSet checkDuplicate = prestmt.executeQuery();
+          log.debug("Opening result set");
+
+          if (checkDuplicate.next()) {
+            // Found a duplicate user, sigh
+            isDuplicate = true;
+            duplicateCounter++;
+
+            newUsername = userName + String.valueOf(duplicateCounter);
+
+            log.debug(
+                "Duplicate username found, changing to "
+                    + newUsername
+                    + " counter "
+                    + String.valueOf(duplicateCounter));
+
+          } else {
+            isDuplicate = false;
+          }
+
+          if (duplicateCounter > 500) {
+            String message =
+                "Bailing out of the de-duplicate loop at " + String.valueOf(duplicateCounter);
+            log.error(message);
+            throw new RuntimeException(message);
+          }
+        }
+
+      } catch (SQLException e) {
+        log.fatal("Failed to check for duplicate usernames: " + e.toString());
+        throw new SQLException(e);
+      }
+
+      try {
+
+        log.debug("Executing userCreate procedure on Database");
+
+        CallableStatement callstmt = conn.prepareCall("call userCreate(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        callstmt.setString(1, classId);
+        callstmt.setString(2, newUsername);
+        callstmt.setString(3, "DISABLED");
+        callstmt.setString(4, userRole);
+        callstmt.setString(5, ssoName);
+        callstmt.setString(6, "");
+        callstmt.setString(7, "saml");
+        callstmt.setBoolean(8, false);
+        callstmt.setBoolean(9, true);
+
+        ResultSet registerAttempt = callstmt.executeQuery();
         log.debug("Opening result set");
 
-        if (checkDuplicate.next()) {
-          // Found a duplicate user, sigh
-          isDuplicate = true;
-          duplicateCounter++;
+        registerAttempt.next();
 
-          newUsername = userName + String.valueOf(duplicateCounter);
-
-          log.debug(
-              "Duplicate username found, changing to "
-                  + newUsername
-                  + " counter "
-                  + String.valueOf(duplicateCounter));
-
+        if (registerAttempt.getString(1) == null) {
+          // Registration success
+          log.debug("Register Success");
+          result = newUsername;
         } else {
-          isDuplicate = false;
+          // Registration failure
+          result = null;
+          log.debug("ResultSet contained -> " + registerAttempt.getString(1));
+          throw new SQLException(registerAttempt.getString(1));
         }
 
-        if (duplicateCounter > 500) {
-          String message =
-              "Bailing out of the de-duplicate loop at " + String.valueOf(duplicateCounter);
-          log.error(message);
-          throw new RuntimeException(message);
-        }
+      } catch (SQLException e) {
+        log.fatal("userCreate Failure: " + e.toString());
+        throw new SQLException(e);
       }
-
-    } catch (SQLException e) {
-      log.fatal("Failed to check for duplicate usernames: " + e.toString());
-      throw new SQLException(e);
-    }
-
-    try {
-
-      log.debug("Executing userCreate procedure on Database");
-
-      CallableStatement callstmt = conn.prepareCall("call userCreate(?, ?, ?, ?, ?, ?, ?, ?, ?)");
-      callstmt.setString(1, classId);
-      callstmt.setString(2, newUsername);
-      callstmt.setString(3, "DISABLED");
-      callstmt.setString(4, userRole);
-      callstmt.setString(5, ssoName);
-      callstmt.setString(6, ""); // userAddress
-      callstmt.setString(7, "saml"); // login type
-      callstmt.setBoolean(8, false); // temppass
-      callstmt.setBoolean(9, true); // Tempname
-
-      ResultSet registerAttempt = callstmt.executeQuery();
-      log.debug("Opening result set");
-
-      registerAttempt.next(); // Procedure Ran correctly
-
-      if (registerAttempt.getString(1) == null) {
-        // Registration success
-        log.debug("Register Success");
-        result = newUsername;
-      } else {
-        // Registration failure
-        result = null;
-        log.debug("ResultSet contained -> " + registerAttempt.getString(1));
-        throw new SQLException(registerAttempt.getString(1));
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
       }
-
-    } catch (SQLException e) {
-      log.fatal("userCreate Failure: " + e.toString());
-      throw new SQLException(e);
     }
-    Database.closeConnection(conn);
     log.debug("*** END userCreateSSO ***");
     return result;
+
   }
 
   public static boolean userDelete(String ApplicationRoot, String userId) throws SQLException {
