@@ -974,18 +974,18 @@ public class Setter {
     log.debug("*** Setter.updateUserRole ***");
 
     String result = null;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call userUpdateRole(?, ?)")) {
 
       log.debug("Preparing userUpdateRole call");
-      CallableStatement callstmnt = conn.prepareCall("call userUpdateRole(?, ?)");
       callstmnt.setString(1, playerId);
       callstmnt.setString(2, newRole);
       log.debug("Executing userUpdateRole");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("userUpdateRole Failure: " + e.toString());
