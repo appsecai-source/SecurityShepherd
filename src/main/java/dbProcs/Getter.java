@@ -705,18 +705,16 @@ public class Getter {
   public static String[] getClassInfo(String ApplicationRoot, String classId) {
     String[] result = new String[2];
     log.debug("*** Getter.getClassInfo (Single Class) ***");
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-      CallableStatement callstmt = conn.prepareCall("call classFind(?)");
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call classFind(?)")) {
       callstmt.setString(1, classId);
       log.debug("Gathering classFind ResultSet");
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from classFind");
-      resultSet.next();
-      result[0] = resultSet.getString(1); // Name
-      result[1] = resultSet.getString(2); // Year
-
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from classFind");
+        resultSet.next();
+        result[0] = resultSet.getString(1); // Name
+        result[1] = resultSet.getString(2); // Year
+      }
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
       result = null;
@@ -724,6 +722,7 @@ public class Getter {
     log.debug("*** END getClassInfo");
     return result;
   }
+
 
   /**
    * The CSRF forum is used in CSRF levels for users to deliver CSRF attacks against each other.
