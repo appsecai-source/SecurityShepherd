@@ -1314,20 +1314,22 @@ public class Setter {
     log.debug("enableRegistration = " + theRegistrationStatus);
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
+      log.debug("Setting registration status setting");
+      PreparedStatement setRegistrationSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      setRegistrationSetting.setBoolean(1, theRegistrationStatus);
+      setRegistrationSetting.setString(2, "openRegistration");
 
-    log.debug("Setting registration status setting");
-    PreparedStatement setRegistrationSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    setRegistrationSetting.setBoolean(1, theRegistrationStatus);
-    setRegistrationSetting.setString(2, "openRegistration");
-
-    if (setRegistrationSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set registration status to " + theRegistrationStatus);
+      if (setRegistrationSetting.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set registration status to " + theRegistrationStatus);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setRegistrationStatus ***");
     return result;
   }
