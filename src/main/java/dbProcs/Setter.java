@@ -452,17 +452,15 @@ public class Setter {
     log.debug("*** Setter.setModuleCategoryStatusOpen ***");
     boolean result = false;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-      PreparedStatement prepstmt =
-          conn.prepareStatement("UPDATE modules SET moduleStatus = ? WHERE moduleCategory = ?");
-      prepstmt.setString(1, openOrClosed);
-      prepstmt.setString(2, moduleCategory);
-      prepstmt.execute();
-      log.debug("Set " + moduleCategory + " to " + openOrClosed);
-      result = true;
-      Database.closeConnection(conn);
-
+      try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+          PreparedStatement prepstmt =
+              conn.prepareStatement("UPDATE modules SET moduleStatus = ? WHERE moduleCategory = ?")) {
+        prepstmt.setString(1, openOrClosed);
+        prepstmt.setString(2, moduleCategory);
+        prepstmt.execute();
+        log.debug("Set " + moduleCategory + " to " + openOrClosed);
+        result = true;
+      }
     } catch (SQLException e) {
       log.error("Could not open/close category: " + e.toString());
     }
