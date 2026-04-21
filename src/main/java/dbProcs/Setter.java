@@ -608,24 +608,37 @@ public class Setter {
     log.debug("*** Setter.unSuspendUser ***");
 
     boolean result = false;
+    Connection conn = null;
+    PreparedStatement callstmnt = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Prepairing suspendUser call");
-      PreparedStatement callstmnt = conn.prepareCall("CALL unSuspendUser(?)");
+      callstmnt = conn.prepareCall("CALL unSuspendUser(?)");
       callstmnt.setString(1, userId);
       log.debug("Executing unSuspendUser statement on id '" + userId + "'");
       callstmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("unSuspendUser Failure: " + e.toString());
       result = false;
+    } finally {
+      if (callstmnt != null) {
+        try {
+          callstmnt.close();
+        } catch (SQLException e) {
+          log.error("Error closing PreparedStatement: " + e.toString());
+        }
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END unSuspendUser ***");
     return result;
   }
+
 
   /**
    * Used to increment a users CSRF counter for CSRF levels.
