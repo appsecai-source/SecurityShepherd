@@ -1488,29 +1488,49 @@ public class Getter {
    * @param applicationRoot The current running context of the application.
    * @param moduleId The identifier of a module
    * @return The hash of the module specified
-   */
   public static String getModuleHash(String applicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleHash ***");
     String result = new String();
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleGetHashById(?)");
+      callstmt = conn.prepareCall("call moduleGetHashById(?)");
       log.debug("Gathering moduleGetHash ResultSet");
       callstmt.setString(1, moduleId);
-      ResultSet resultSet = callstmt.executeQuery();
+      resultSet = callstmt.executeQuery();
       log.debug("Opening Result Set from moduleGetHash");
       resultSet.next();
       result = resultSet.getString(1);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute moduleGetHash: " + e.toString());
       result = null;
+    } finally {
+      try {
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close ResultSet: " + e.toString());
+      }
+      try {
+        if (callstmt != null) {
+          callstmt.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close CallableStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getModuleHash ***");
     return result;
   }
+
 
   /**
    * Convert module hash to ID
