@@ -839,17 +839,17 @@ public class Setter {
     log.debug("*** Setter.updatePlayerClassToNull ***");
 
     String result = null;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)")) {
 
       log.debug("Preparing playerUpdateClassToNull call");
-      CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)");
       callstmnt.setString(1, playerId);
       log.debug("Executing playerUpdateClassToNull");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmnt.executeQuery()) {
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("updatePlayerClassToNull Failure: " + e.toString());
