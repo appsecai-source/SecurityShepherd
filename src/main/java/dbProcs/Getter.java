@@ -265,13 +265,15 @@ public class Getter {
 
     boolean isTempUsername = false;
 
-    Connection conn;
-    try {
-      conn = Database.getCoreConnection(ApplicationRoot);
-    } catch (SQLException e) {
-      log.fatal("Could create get core connection: " + e.toString());
-      throw new RuntimeException(e);
-    }
+  Connection conn;
+  try {
+    conn = Database.getCoreConnection(ApplicationRoot);
+  } catch (SQLException e) {
+    log.fatal("Could create get core connection: " + e.toString());
+    throw new RuntimeException(e);
+  }
+
+  try {
     // See if user Exists
     PreparedStatement prestmt;
     try {
@@ -415,9 +417,7 @@ public class Getter {
       if (userResult.next()) {
         userFound = true;
         log.debug(
-            "User Found"); // User found if a row is in the database, this line will not work if the
-        // result
-        // set is empty
+            "User Found");
       } else {
         userFound = false;
       }
@@ -438,7 +438,7 @@ public class Getter {
     try {
       userID = userResult.getString(1);
       userName = userResult.getString(2);
-      classId = userResult.getString(3); // classId
+      classId = userResult.getString(3);
       isTempUsername = userResult.getBoolean(4);
     } catch (SQLException e) {
       String message =
@@ -455,15 +455,19 @@ public class Getter {
     log.debug("User '" + userName + "' has logged in via SSO" + " with role " + userRole);
 
     result[0] = userID;
-    result[1] = userName; // userName
-    result[2] = userRole; // role
-    result[5] = "false"; // sso logins can't change password
-    result[4] = classId; // classId
+    result[1] = userName;
+    result[2] = userRole;
+    result[5] = "false";
+    result[4] = classId;
     result[5] = Boolean.toString(isTempUsername);
 
+  } finally {
     Database.closeConnection(conn);
-    log.debug("$$$ End authUser $$$");
-    return result;
+  }
+  
+  log.debug("$$$ End authUser $$$");
+  return result;
+
   }
 
   /**
