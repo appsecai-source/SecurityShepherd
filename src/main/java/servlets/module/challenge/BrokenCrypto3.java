@@ -74,7 +74,7 @@ public class BrokenCrypto3 extends HttpServlet {
         log.debug("Decrypting user input");
         // Using level key as encryption key
         String decryptedUserData = decrypt(userData, levelResult);
-        log.debug("Decrypted to: " + decryptedUserData);
+        log.debug("User input decrypted successfully");
 
         htmlOutput =
             "<h2 class='title'>"
