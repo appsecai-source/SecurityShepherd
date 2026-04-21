@@ -1208,20 +1208,21 @@ public class Setter {
     log.debug("adminCheatsEnabled = " + adminCheatsEnabled);
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try {
+      log.debug("Setting admin cheat setting");
+      PreparedStatement callAdminSetting =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      callAdminSetting.setBoolean(1, adminCheatsEnabled);
+      callAdminSetting.setString(2, "adminCheatsEnabled");
 
-    log.debug("Setting admin cheat setting");
-    PreparedStatement callAdminSetting =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    callAdminSetting.setBoolean(1, adminCheatsEnabled);
-    callAdminSetting.setString(2, "adminCheatsEnabled");
-
-    if (callAdminSetting.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set admin cheat setting");
+      if (callAdminSetting.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set admin cheat setting");
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
-
-    Database.closeConnection(conn);
     log.debug("*** END setAdminCheatStatus ***");
     return result;
   }
