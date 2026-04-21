@@ -734,24 +734,23 @@ public class Setter {
 
     log.debug("Preparing username change call from username " + userName + " to " + newUsername);
     PreparedStatement prestmnt;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement prestmnt = 
+             conn.prepareStatement(
+                 "UPDATE users SET userName = ?, tempUsername = FALSE WHERE userName = ?;")) {
 
-      prestmnt =
-          conn.prepareStatement(
-              "UPDATE users SET userName = ?, tempUsername = FALSE WHERE userName = ?;");
       prestmnt.setString(1, newUsername);
 
       prestmnt.setString(2, userName);
       log.debug("Executing name change query");
       prestmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.debug("Could not update username: " + e.toString());
       throw new RuntimeException(e);
     }
+
 
     log.debug("*** END updateUsername ***");
     return result;
