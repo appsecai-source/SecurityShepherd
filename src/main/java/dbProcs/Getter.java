@@ -1087,82 +1087,82 @@ public class Getter {
 
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
+      try {
+        CallableStatement callstmt = conn.prepareCall("call moduleIncrementalInfo(?)");
+        callstmt.setString(1, userId);
+        log.debug("Gathering moduleIncrementalInfo ResultSet");
+        ResultSet modules = callstmt.executeQuery();
+        log.debug("Opening Result Set from moduleIncrementalInfo");
+        boolean lastRow = false;
+        boolean completedModules = false;
 
-      CallableStatement callstmt = conn.prepareCall("call moduleIncrementalInfo(?)");
-      callstmt.setString(1, userId);
-      log.debug("Gathering moduleIncrementalInfo ResultSet");
-      ResultSet modules = callstmt.executeQuery();
-      log.debug("Opening Result Set from moduleIncrementalInfo");
-      boolean lastRow = false;
-      boolean completedModules = false;
-
-      // Preparing first Category header; "Completed"
-      output =
-          "<li><a id='completedList' href='javascript:;'><div class='menuButton'>"
-              + bundle.getString("getter.button.completed")
-              + "</div></a>\n"
-              + "<ul id='theCompletedList' style='display: none;' class='levelList'>";
-
-      while (modules.next() && !lastRow) {
-        // For each row, prepair the modules the users can select
-        if (modules.getString(4) != null) // If not Last Row
-        {
-          completedModules = true;
-          output += "<li>";
-          output +=
-              "<a class='lesson' id='"
-                  + Encode.forHtmlAttribute(modules.getString(3))
-                  + "' href='javascript:;'>"
-                  + Encode.forHtml(levelNames.getString(modules.getString(1)))
-                  + "</a>";
-          output += "</li>";
-        } else {
-          lastRow = true;
-          // Last Row - Highlighed Next Challenge
-          if (completedModules) {
-            output += "</ul></li><li>";
-          } else {
-            // NO completed modules, so dont show any...
-            output = new String();
-          }
-
-          // Second category - Uncompleted
-          output +=
-              "<a class='lesson' id='"
-                  + Encode.forHtmlAttribute(modules.getString(3))
-                  + "' href='javascript:;'>"
-                  + "<div class='menuButton'>"
-                  + bundle.getString("getter.button.nextChallenge")
-                  + "</div>"
-                  + "</a>";
-          output += "</li>";
-        }
-      }
-
-      if (!lastRow) // If true, then the user has completed all challenges
-      {
-        output +=
-            "<h2 id='uncompletedList'><a href='javascript:;'>"
-                + bundle.getString("getter.button.finished")
-                + "</a></h2>\n"
-                + "</li>";
-      }
-      if (output
-          .isEmpty()) // If this method has gone so far without any output, create a error message
-      {
+        // Preparing first Category header; "Completed"
         output =
-            "<li><a href='javascript:;'>"
-                + bundle.getString("getter.button.noModulesFound")
-                + "</a></li>";
-      } else // final tags to ensure valid HTML
-      {
-        log.debug("Appending End tags");
-        // output += "</ul></li>"; //Commented Out to prevent Search Box being pushed
-        // into Footer
+            "<li><a id='completedList' href='javascript:;'><div class='menuButton'>"
+                + bundle.getString("getter.button.completed")
+                + "</div></a>\n"
+                + "<ul id='theCompletedList' style='display: none;' class='levelList'>";
+
+        while (modules.next() && !lastRow) {
+          // For each row, prepair the modules the users can select
+          if (modules.getString(4) != null) // If not Last Row
+          {
+            completedModules = true;
+            output += "<li>";
+            output +=
+                "<a class='lesson' id='"
+                    + Encode.forHtmlAttribute(modules.getString(3))
+                    + "' href='javascript:;'>"
+                    + Encode.forHtml(levelNames.getString(modules.getString(1)))
+                    + "</a>";
+            output += "</li>";
+          } else {
+            lastRow = true;
+            // Last Row - Highlighed Next Challenge
+            if (completedModules) {
+              output += "</ul></li><li>";
+            } else {
+              // NO completed modules, so dont show any...
+              output = new String();
+            }
+
+            // Second category - Uncompleted
+            output +=
+                "<a class='lesson' id='"
+                    + Encode.forHtmlAttribute(modules.getString(3))
+                    + "' href='javascript:;'>"
+                    + "<div class='menuButton'>"
+                    + bundle.getString("getter.button.nextChallenge")
+                    + "</div>"
+                    + "</a>";
+            output += "</li>";
+          }
+        }
+
+        if (!lastRow) // If true, then the user has completed all challenges
+        {
+          output +=
+              "<h2 id='uncompletedList'><a href='javascript:;'>"
+                  + bundle.getString("getter.button.finished")
+                  + "</a></h2>\n"
+                  + "</li>";
+        }
+        if (output
+            .isEmpty()) // If this method has gone so far without any output, create a error message
+        {
+          output =
+              "<li><a href='javascript:;'>"
+                  + bundle.getString("getter.button.noModulesFound")
+                  + "</a></li>";
+        } else // final tags to ensure valid HTML
+        {
+          log.debug("Appending End tags");
+          // output += "</ul></li>"; //Commented Out to prevent Search Box being pushed
+          // into Footer
+        }
+      } finally {
+        Database.closeConnection(conn);
       }
-
-      Database.closeConnection(conn);
-
     } catch (Exception e) {
       log.error("Challenge Retrieval: " + e.toString());
     }
