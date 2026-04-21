@@ -2345,17 +2345,16 @@ public class Getter {
   public static String getUserName(String ApplicationRoot, String userId) {
     log.debug("*** Getter.getUserName ***");
     String result = new String();
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call userGetNameById(?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call userGetNameById(?)");
       log.debug("Gathering userGetNameById ResultSet");
       callstmt.setString(1, userId);
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from userGetNameById");
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from userGetNameById");
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
@@ -2364,6 +2363,7 @@ public class Getter {
     log.debug("*** END getUserName ***");
     return result;
   }
+
 
   /**
    * This method is used to determine if a CSRF level has been completed. A call is made to the DB
