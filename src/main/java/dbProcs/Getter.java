@@ -1549,12 +1549,12 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param moduleId The id of the module
    * @return Returns true if a module has a hard coded key, false if server encrypts it
-   */
   public static boolean getModuleKeyType(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.getModuleKeyType ***");
     boolean theKeyType = true;
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
       PreparedStatement prepstmt =
           conn.prepareStatement("SELECT hardcodedKey FROM modules WHERE moduleId = ?");
@@ -1567,15 +1567,18 @@ public class Getter {
       } else {
         log.debug("Module has user specific Key");
       }
-      Database.closeConnection(conn);
-
     } catch (Exception e) {
       log.error("Module did not exist: " + e.toString());
       theKeyType = true;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getModuleKeyType ***");
     return theKeyType;
   }
+
 
   /**
    * This method retrieves the i18n local key for a module's name.
