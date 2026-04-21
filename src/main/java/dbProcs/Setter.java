@@ -843,12 +843,14 @@ public class Setter {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Preparing playerUpdateClassToNull call");
-      CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)");
-      callstmnt.setString(1, playerId);
-      log.debug("Executing playerUpdateClassToNull");
-      ResultSet resultSet = callstmnt.executeQuery();
-      resultSet.next();
-      result = resultSet.getString(1);
+      try (CallableStatement callstmnt = conn.prepareCall("call playerUpdateClassToNull(?)")) {
+        callstmnt.setString(1, playerId);
+        log.debug("Executing playerUpdateClassToNull");
+        try (ResultSet resultSet = callstmnt.executeQuery()) {
+          resultSet.next();
+          result = resultSet.getString(1);
+        }
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -857,6 +859,8 @@ public class Setter {
     }
     log.debug("*** END updatePlayerClassToNull ***");
     return result;
+  }
+
   }
 
   /**
