@@ -1439,7 +1439,6 @@ public class Setter {
     log.debug("*** END setStartTime ***");
     return result;
   }
-
   public static boolean setLockTimeStatus(String ApplicationRoot, boolean theLockTimeStatus)
       throws SQLException {
     boolean result = false;
@@ -1448,21 +1447,26 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting lock timestamp setting");
-    PreparedStatement lockTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    lockTimeStatement.setBoolean(1, theLockTimeStatus);
-    lockTimeStatement.setString(2, "hasLockTime");
+    try {
+      log.debug("Setting lock timestamp setting");
+      PreparedStatement lockTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      lockTimeStatement.setBoolean(1, theLockTimeStatus);
+      lockTimeStatement.setString(2, "hasLockTime");
 
-    if (lockTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set lock time status to " + theLockTimeStatus);
+      if (lockTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set lock time status to " + theLockTimeStatus);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END setLockTimeStatus ***");
     return result;
+  }
+
   }
 
   public static boolean setLockTime(String ApplicationRoot, LocalDateTime theLockTime)
