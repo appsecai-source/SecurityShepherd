@@ -1176,29 +1176,29 @@ public class Setter {
     log.debug("*** Setter.userDelete ***");
     log.debug("userId = " + userId);
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
-    try {
-      log.debug("Deleting User's Results");
-      PreparedStatement callDelResults =
-          conn.prepareStatement("DELETE FROM results WHERE userId = ?");
-      callDelResults.setString(1, userId);
-      callDelResults.executeUpdate();
-
-      log.debug("Executing delete from users on Database");
-      PreparedStatement callUserDel = conn.prepareStatement("DELETE FROM users WHERE userId = ?");
-      callUserDel.setString(1, userId);
-      int deleteAttemptResult = callUserDel.executeUpdate();
-
-      if (deleteAttemptResult == 1) {
-        result = true;
-      }
-    } catch (SQLException sqlEx) {
-      log.fatal("userDelete Failure: " + sqlEx.toString());
-      throw new SQLException(sqlEx);
-    }
-    Database.closeConnection(conn);
-    log.debug("*** END userDelete ***");
-    return result;
+    Connection conn = Database.getCoreConnection(ApplicationRoot); // L1179
+    try { // L1180
+      log.debug("Deleting User's Results"); // L1181
+      PreparedStatement callDelResults = // L1182
+          conn.prepareStatement("DELETE FROM results WHERE userId = ?"); // L1183
+      callDelResults.setString(1, userId); // L1184
+      callDelResults.executeUpdate(); // L1185
+ // L1186
+      log.debug("Executing delete from users on Database"); // L1187
+      PreparedStatement callUserDel = conn.prepareStatement("DELETE FROM users WHERE userId = ?"); // L1188
+      callUserDel.setString(1, userId); // L1189
+      int deleteAttemptResult = callUserDel.executeUpdate(); // L1190
+ // L1191
+      if (deleteAttemptResult == 1) { // L1192
+        result = true; // L1193
+      } // L1194
+    } catch (SQLException sqlEx) { // L1195
+      log.fatal("userDelete Failure: " + sqlEx.toString()); // L1196
+      throw new SQLException(sqlEx); // L1197
+    } finally { // L1198
+      Database.closeConnection(conn); // L1199
+    } // L1200
+    log.debug("*** END userDelete ***"); // L1201
   }
 
   public static boolean setAdminCheatStatus(String ApplicationRoot, boolean adminCheatsEnabled)
