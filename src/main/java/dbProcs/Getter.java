@@ -2374,15 +2374,15 @@ public class Getter {
    * @param moduleId Hash ID of the CSRF module you wish to check if a user has completed
    * @param userId the ID of the user to check
    * @return True or False value depicting if the user has completed the module
-   */
   public static boolean isCsrfLevelComplete(
       String applicationRoot, String moduleId, String userId) {
     log.debug("*** Setter.isCsrfLevelComplete ***");
 
     boolean result = false;
 
+    Connection conn = null;
     try {
-      Connection conn = Database.getCoreConnection(applicationRoot);
+      conn = Database.getCoreConnection(applicationRoot);
 
       log.debug("Preparing csrfLevelComplete call");
       PreparedStatement callstmnt = conn.prepareCall("call csrfLevelComplete(?, ?)");
@@ -2397,15 +2397,19 @@ public class Getter {
       if (result) {
         log.debug("CSRF Level is complete");
       }
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("csrfLevelComplete Failure: " + e.toString());
       result = false;
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END isCsrfLevelComplete ***");
     return result;
   }
+
 
   public static boolean isModuleOpen(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.isModuleOpen ***");
