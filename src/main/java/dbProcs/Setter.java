@@ -946,13 +946,14 @@ public class Setter {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
       log.debug("Preparing updateUserPoints call");
-      PreparedStatement prestmnt =
-          conn.prepareStatement("UPDATE users SET userScore = userScore + ? WHERE userId = ?");
-      prestmnt.setInt(1, points);
-      prestmnt.setString(2, userId);
-      log.debug("Executing updateUserPoints");
-      prestmnt.execute();
-      result = true;
+      try (PreparedStatement prestmnt =
+          conn.prepareStatement("UPDATE users SET userScore = userScore + ? WHERE userId = ?")) {
+        prestmnt.setInt(1, points);
+        prestmnt.setString(2, userId);
+        log.debug("Executing updateUserPoints");
+        prestmnt.execute();
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
