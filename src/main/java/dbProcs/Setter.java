@@ -1498,22 +1498,26 @@ public class Setter {
 
     Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Setting end time setting");
-    PreparedStatement lockTimeStatement =
-        conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
-    lockTimeStatement.setBoolean(1, theEndTimeStatus);
-    lockTimeStatement.setString(2, "hasEndTime");
+    try {
+      log.debug("Setting end time setting");
+      PreparedStatement lockTimeStatement =
+          conn.prepareStatement("UPDATE settings SET value = ? WHERE setting = ?");
+      lockTimeStatement.setBoolean(1, theEndTimeStatus);
+      lockTimeStatement.setString(2, "hasEndTime");
 
-    if (lockTimeStatement.executeUpdate() == 1) {
-      result = true;
-    } else {
-      throw new RuntimeException("Could not set end time status to " + theEndTimeStatus);
+      if (lockTimeStatement.executeUpdate() == 1) {
+        result = true;
+      } else {
+        throw new RuntimeException("Could not set end time status to " + theEndTimeStatus);
+      }
+    } finally {
+      Database.closeConnection(conn);
     }
 
-    Database.closeConnection(conn);
     log.debug("*** END theEndTimeStatus ***");
     return result;
   }
+
 
   public static boolean setEndTime(String ApplicationRoot, LocalDateTime theEndTime)
       throws SQLException {
