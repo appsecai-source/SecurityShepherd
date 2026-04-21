@@ -507,20 +507,20 @@ public class Setter {
    * @param ApplicationRoot Current running director of the application
    * @param moduleId The identifier of the module that is been set to open status
    * @return Boolean result depicting success of statement
-   */
   public static boolean setModuleStatusOpen(String ApplicationRoot, String moduleId) {
     log.debug("*** Setter.setModuleStatusOpen ***");
     boolean result = false;
     try {
       Connection conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call moduleSetStatus(?, ?)");
-      log.debug("Preparing moduleSetStatus procedure");
-      callstmt.setString(1, moduleId);
-      callstmt.setString(2, "open");
-      callstmt.execute();
-      log.debug("Executed moduleSetStatus");
-      result = true;
+      try (CallableStatement callstmt = conn.prepareCall("call moduleSetStatus(?, ?)")) {
+        log.debug("Preparing moduleSetStatus procedure");
+        callstmt.setString(1, moduleId);
+        callstmt.setString(2, "open");
+        callstmt.execute();
+        log.debug("Executed moduleSetStatus");
+        result = true;
+      }
       Database.closeConnection(conn);
 
     } catch (SQLException e) {
@@ -528,6 +528,8 @@ public class Setter {
     }
     log.debug("*** END setModuleStatusOpen ***");
     return result;
+  }
+
   }
 
   /**
