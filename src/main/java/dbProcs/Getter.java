@@ -590,62 +590,57 @@ public class Getter {
     ResourceBundle bundle = ResourceBundle.getBundle("i18n.moduleGenerics.moduleNames", lang);
     // Encoder to prevent XSS
     Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-    CallableStatement callstmt = conn.prepareCall("call moduleAllInfo(?, ?)");
-    callstmt.setString(1, "challenge");
-    callstmt.setString(2, userId);
-    log.debug("Gathering moduleAllInfo ResultSet");
-    ResultSet challenges = callstmt.executeQuery();
-    log.debug("Opening Result Set from moduleAllInfo");
-    String challengeCategory = new String();
-    int rowNumber = 0; // Identifies the first row, ie the start of the list. This is slightly
-    // different output to every other row
-    while (challenges.next()) {
-      if (!challengeCategory.equalsIgnoreCase(challenges.getString(2))) {
-        challengeCategory = challenges.getString(2);
-        // log.debug("New Category Detected: " + challengeCategory);
-        if (rowNumber > 0) // output prepared for Every row after row 1
-        {
-          output +=
-              "</ul></li><li><a href='javascript:;' class='challengeHeader' >"
-                  + Encode.forHtml(bundle.getString("category." + challengeCategory))
-                  + "</a><ul class='challengeList' style='display: none;'>";
-        } else // output prepared for First row in entire challenge
-        {
-          output +=
-              "<li><a href='javascript:;' class='challengeHeader'>"
-                  + Encode.forHtml(bundle.getString("category." + challengeCategory))
-                  + "</a><ul class='challengeList' style='display: none;'>";
+    try {
+      CallableStatement callstmt = conn.prepareCall("call moduleAllInfo(?, ?)");
+      callstmt.setString(1, "challenge");
+      callstmt.setString(2, userId);
+      log.debug("Gathering moduleAllInfo ResultSet");
+      ResultSet challenges = callstmt.executeQuery();
+      log.debug("Opening Result Set from moduleAllInfo");
+      String challengeCategory = new String();
+      int rowNumber = 0;
+      while (challenges.next()) {
+        if (!challengeCategory.equalsIgnoreCase(challenges.getString(2))) {
+          challengeCategory = challenges.getString(2);
+          if (rowNumber > 0) {
+            output +=
+                "</ul></li><li><a href='javascript:;' class='challengeHeader' >"
+                    + Encode.forHtml(bundle.getString("category." + challengeCategory))
+                    + "</a><ul class='challengeList' style='display: none;'>";
+          } else {
+            output +=
+                "<li><a href='javascript:;' class='challengeHeader'>"
+                    + Encode.forHtml(bundle.getString("category." + challengeCategory))
+                    + "</a><ul class='challengeList' style='display: none;'>";
+          }
         }
-        // log.debug("Compiling Challenge Category - " + challengeCategory);
+        output += "<li>";
+        if (challenges.getString(4) != null) {
+          output += "<img src='css/images/completed.png'/>";
+        } else {
+          output += "<img src='css/images/uncompleted.png'/>";
+        }
+        output +=
+            "<a class='lesson' id='"
+                + Encode.forHtmlAttribute(challenges.getString(3))
+                + "' href='javascript:;'>"
+                + Encode.forHtml(bundle.getString(challenges.getString(1)))
+                + "</a>";
+        output += "</li>";
+        rowNumber++;
       }
-      output += "<li>"; // Starts next LI element
-      if (challenges.getString(4) != null) {
-        output += "<img src='css/images/completed.png'/>"; // Completed marker
+      if (output.isEmpty()) {
+        output = "<li>No challenges found</li>";
       } else {
-        output += "<img src='css/images/uncompleted.png'/>"; // Incomplete marker
+        log.debug("Appending End tags");
+        output += "</ul></li>";
       }
-      // Final out put compilation
-      output +=
-          "<a class='lesson' id='"
-              + Encode.forHtmlAttribute(challenges.getString(3))
-              + "' href='javascript:;'>"
-              + Encode.forHtml(bundle.getString(challenges.getString(1)))
-              + "</a>";
-      output += "</li>";
-      rowNumber++;
+    } finally {
+      Database.closeConnection(conn);
     }
-    // Check if output is empty
-    if (output.isEmpty()) {
-      output = "<li>No challenges found</li>";
-    } else {
-      log.debug("Appending End tags");
-      output += "</ul></li>";
-    }
-
-    Database.closeConnection(conn);
     log.debug("*** END getChallenges() ***");
     return output;
+
   }
 
   /**
