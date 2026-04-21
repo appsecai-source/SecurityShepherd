@@ -682,20 +682,33 @@ public class Getter {
   public static ResultSet getClassInfo(String ApplicationRoot) {
     ResultSet result = null;
     log.debug("*** Getter.getClassInfo (All Classes) ***");
+    Connection conn = null;
+    CallableStatement callstmt = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call classesGetData()");
+      callstmt = conn.prepareCall("call classesGetData()");
       log.debug("Gathering classesGetData ResultSet");
       result = callstmt.executeQuery();
       log.debug("Returning Result Set from classesGetData");
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
       result = null;
+      if (callstmt != null) {
+        try {
+          callstmt.close();
+        } catch (SQLException ex) {
+          log.error("Could not close CallableStatement: " + ex.toString());
+        }
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getClassInfo");
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
