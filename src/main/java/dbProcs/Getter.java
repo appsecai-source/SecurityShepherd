@@ -2410,27 +2410,24 @@ public class Getter {
   public static boolean isModuleOpen(String ApplicationRoot, String moduleId) {
     log.debug("*** Getter.isModuleOpen ***");
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
-
-      // Get the modules
-      PreparedStatement prepStmt =
-          conn.prepareStatement("SELECT moduleStatus FROM modules WHERE moduleId = ?");
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement prepStmt = conn.prepareStatement("SELECT moduleStatus FROM modules WHERE moduleId = ?")) {
+      
       prepStmt.setString(1, moduleId);
-      ResultSet rs = prepStmt.executeQuery();
-      if (rs.next()) {
-        if (rs.getString(1).equalsIgnoreCase("open")) {
-          result = true;
+      try (ResultSet rs = prepStmt.executeQuery()) {
+        if (rs.next()) {
+          if (rs.getString(1).equalsIgnoreCase("open")) {
+            result = true;
+          }
         }
       }
-      rs.close();
-      Database.closeConnection(conn);
-
+      
     } catch (Exception e) {
       log.error("isModuleOpen Error: " + e.toString());
     }
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
