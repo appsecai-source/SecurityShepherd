@@ -2280,31 +2280,51 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param userName The username of the user
    * @return The class id of the submitted user name
-   */
   public static String getUserClassFromName(String ApplicationRoot, String userName) {
     log.debug("*** Getter.getUserClass ***");
     String result = new String();
     userName = userName.toLowerCase();
+    Connection conn = null;
+    CallableStatement callstmt = null;
+    ResultSet resultSet = null;
     try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-      CallableStatement callstmt = conn.prepareCall("call userClassId(?)");
+      callstmt = conn.prepareCall("call userClassId(?)");
       log.debug("Gathering userClassId ResultSet");
       callstmt.setString(1, userName);
-      ResultSet resultSet = callstmt.executeQuery();
+      resultSet = callstmt.executeQuery();
       log.debug("Opening Result Set from userClassId");
       resultSet.next();
       result = resultSet.getString(1);
       log.debug("Found " + result);
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not execute userClassId: " + e.toString());
       result = new String();
+    } finally {
+      try {
+        if (resultSet != null) {
+          resultSet.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close ResultSet: " + e.toString());
+      }
+      try {
+        if (callstmt != null) {
+          callstmt.close();
+        }
+      } catch (SQLException e) {
+        log.error("Could not close CallableStatement: " + e.toString());
+      }
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
     }
     log.debug("*** END getUserClass ***");
     return result;
   }
+
 
   /**
    * @param ApplicationRoot The current running context of the application
