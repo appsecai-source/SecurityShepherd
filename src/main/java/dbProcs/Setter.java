@@ -158,27 +158,26 @@ public class Setter {
    * @param ApplicationRoot Current running director of the application
    * @param unsafe set whether to open all safe modules or all modules that are unsafe
    * @return Boolean result depicting success of statement
-   */
   public static boolean openAllModules(String ApplicationRoot, boolean unsafe) {
     log.debug("*** Setter.openAllModules ***");
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot)) {
 
       if (unsafe) {
-        PreparedStatement callstmt =
-            conn.prepareStatement("UPDATE modules SET moduleStatus = 'open' WHERE isUnsafe = 1");
-        callstmt.execute();
-        log.debug("All unsafe modules set to open");
+        try (PreparedStatement callstmt =
+            conn.prepareStatement("UPDATE modules SET moduleStatus = 'open' WHERE isUnsafe = 1")) {
+          callstmt.execute();
+          log.debug("All unsafe modules set to open");
+        }
       } else {
-        PreparedStatement callstmt =
-            conn.prepareStatement("UPDATE modules SET moduleStatus = 'open' WHERE isUnsafe = 0");
-        callstmt.execute();
-        log.debug("All safe modules set to open");
+        try (PreparedStatement callstmt =
+            conn.prepareStatement("UPDATE modules SET moduleStatus = 'open' WHERE isUnsafe = 0")) {
+          callstmt.execute();
+          log.debug("All safe modules set to open");
+        }
       }
 
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("Could not open all modules: " + e.toString());
@@ -186,6 +185,7 @@ public class Setter {
     log.debug("*** END setModuleStatusOpen ***");
     return result;
   }
+
 
   /**
    * This is used to only open Mobile category levels
