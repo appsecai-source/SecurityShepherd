@@ -2687,30 +2687,35 @@ public class Getter {
     log.debug("*** END getStartTimeStatus ***");
     return theStartTimeStatus;
   }
-
   public static LocalDateTime getStartTime(String ApplicationRoot) throws SQLException {
     LocalDateTime theStartTimeStatus = null;
     log.debug("*** Getter.getStartTimeStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting start time");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting start time");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "startTime");
+      callstmt.setString(1, "startTime");
 
-    ResultSet timestampResult = callstmt.executeQuery();
+      ResultSet timestampResult = callstmt.executeQuery();
 
-    timestampResult.next();
+      timestampResult.next();
 
-    String dateTimeString = timestampResult.getString(1);
+      String dateTimeString = timestampResult.getString(1);
 
-    log.debug("Value found: " + dateTimeString);
+      log.debug("Value found: " + dateTimeString);
 
-    theStartTimeStatus = LocalDateTime.parse(dateTimeString);
+      theStartTimeStatus = LocalDateTime.parse(dateTimeString);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
 
-    Database.closeConnection(conn);
     log.debug("*** END getStartTime ***");
     return theStartTimeStatus;
   }
