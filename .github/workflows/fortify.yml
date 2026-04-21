@@ -185,6 +185,7 @@ jobs:
       FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
       FOD_SEVERITY_STRINGS: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical' }}
       FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
+      REMEDIATION_VALIDATE_COMMAND: ${{ vars.REMEDIATION_VALIDATE_COMMAND || 'mvn -q -DskipTests compile' }}
       # Use a PAT if provided; otherwise fall back to the workflow token.
       GITHUB_TOKEN: ${{ secrets.REMEDIATION_GITHUB_TOKEN || github.token }}
       GITHUB_REPOSITORY: ${{ github.repository }}
@@ -201,6 +202,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
 
       - name: Install dependencies
         run: |
