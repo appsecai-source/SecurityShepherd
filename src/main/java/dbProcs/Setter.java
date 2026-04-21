@@ -271,16 +271,14 @@ public class Setter {
     log.debug("*** Setter.resetBadSubmission ***");
 
     boolean result = false;
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         PreparedStatement callstmnt = conn.prepareCall("CALL resetUserBadSubmission(?)")) {
 
       log.debug("Prepairing resetUserBadSubmission call");
-      PreparedStatement callstmnt = conn.prepareCall("CALL resetUserBadSubmission(?)");
       callstmnt.setString(1, userId);
       log.debug("Executing resetUserBadSubmission statement on id '" + userId + "'");
       callstmnt.execute();
       result = true;
-      Database.closeConnection(conn);
 
     } catch (SQLException e) {
       log.error("resetUserBadSubmission Failure: " + e.toString());
