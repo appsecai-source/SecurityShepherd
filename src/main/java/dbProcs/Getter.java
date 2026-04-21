@@ -2771,26 +2771,33 @@ public class Getter {
     Boolean theEndTimeStatus = null;
     log.debug("*** Getter.getEndTimeStatus ***");
 
-    Connection conn = Database.getCoreConnection(ApplicationRoot);
+    Connection conn = null;
+    try {
+      conn = Database.getCoreConnection(ApplicationRoot);
 
-    log.debug("Getting end time setting");
-    PreparedStatement callstmt =
-        conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
+      log.debug("Getting end time setting");
+      PreparedStatement callstmt =
+          conn.prepareStatement("SELECT value FROM settings WHERE setting= ?");
 
-    callstmt.setString(1, "hasEndTime");
+      callstmt.setString(1, "hasEndTime");
 
-    ResultSet timestampResult = callstmt.executeQuery();
+      ResultSet timestampResult = callstmt.executeQuery();
 
-    timestampResult.next();
+      timestampResult.next();
 
-    theEndTimeStatus = timestampResult.getBoolean(1);
+      theEndTimeStatus = timestampResult.getBoolean(1);
 
-    log.debug("Value found: " + theEndTimeStatus);
+      log.debug("Value found: " + theEndTimeStatus);
 
-    Database.closeConnection(conn);
+    } finally {
+      if (conn != null) {
+        Database.closeConnection(conn);
+      }
+    }
     log.debug("*** END getEndTimeStatus ***");
     return theEndTimeStatus;
   }
+
 
   public static LocalDateTime getEndTime(String ApplicationRoot) throws SQLException {
     LocalDateTime theEndTimeStatus = null;
