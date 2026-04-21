@@ -2310,24 +2310,23 @@ public class Getter {
    * @param ApplicationRoot The current running context of the application
    * @param userName The username of the user
    * @return The user id of the submitted user name
-   */
   public static String getUserIdFromName(String ApplicationRoot, String userName) {
     log.debug("*** Getter.getUserIdFromName ***");
     String result = new String();
 
     userName = userName.toLowerCase();
 
-    try {
-      Connection conn = Database.getCoreConnection(ApplicationRoot);
+    try (Connection conn = Database.getCoreConnection(ApplicationRoot);
+         CallableStatement callstmt = conn.prepareCall("call userGetIdByName(?)")) {
 
-      CallableStatement callstmt = conn.prepareCall("call userGetIdByName(?)");
       log.debug("Gathering userGetIdByName ResultSet");
       callstmt.setString(1, userName);
-      ResultSet resultSet = callstmt.executeQuery();
-      log.debug("Opening Result Set from userGetIdByName");
-      resultSet.next();
-      result = resultSet.getString(1);
-      Database.closeConnection(conn);
+      
+      try (ResultSet resultSet = callstmt.executeQuery()) {
+        log.debug("Opening Result Set from userGetIdByName");
+        resultSet.next();
+        result = resultSet.getString(1);
+      }
 
     } catch (SQLException e) {
       log.error("Could not execute query: " + e.toString());
@@ -2335,6 +2334,8 @@ public class Getter {
     }
     log.debug("*** END getUserIdFromName ***");
     return result;
+  }
+
   }
 
   /**
