@@ -246,7 +246,8 @@ public class SessionManagement6SecretQuestion extends HttpServlet {
             } catch (SQLException e) {
               log.debug(levelName + " SQL Error: " + e.toString());
               log.debug("Outputting error to user");
-              htmlOutput = new String(e.toString());
+              htmlOutput = new String(bundle.getString("question.databaseError"));
+            }
             }
           } else {
             log.debug("Tampered cookie detected");
