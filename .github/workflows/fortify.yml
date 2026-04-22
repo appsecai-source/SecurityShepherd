@@ -181,7 +181,7 @@ jobs:
           ref: ${{ needs.resolve-pr-context.outputs.checkout_ref }}
 
       - name: Run Fortify Aviator remediation action
-        uses: appsecai-source/fortify-aviator-remediation-action@d4b17a4316452a1200dbec675cfedb252d9218a5
+        uses: appsecai-source/fortify-aviator-remediation-action@main
         with:
           fod-base-url: ${{ vars.FOD_BASE_URL || 'https://api.ams.fortify.com' }}
           fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
