@@ -150,7 +150,7 @@ jobs:
           cache: maven
 
       - name: Run Fortify on Demand scan
-        uses: appsecai-source/fortify-aviator-remediation-action/fod-scan@d4b17a4316452a1200dbec675cfedb252d9218a5
+        uses: appsecai-source/fortify-aviator-remediation-action@main
         with:
           fod-url: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
           fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
