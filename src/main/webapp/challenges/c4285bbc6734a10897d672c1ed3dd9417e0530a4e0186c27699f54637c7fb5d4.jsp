@@ -70,8 +70,9 @@ String i18nLevelName = bundle.getString("securityMisconfig.stealTokens.challenge
 		//Set User  Cookie
 		try
 		{
-			Cookie userCookie = new Cookie("securityMisconfigLesson", SecurityMisconfigStealTokens.getUserToken(userId, applicationRoot));
-	        response.addCookie(userCookie);
+			Cookie userCookie = new Cookie("securityMisconfigLesson", SecurityMisconfigStealTokens.getUserToken(userId, applicationRoot)); <%-- L73 --%>
+			userCookie.setSecure(true);
+	        response.addCookie(userCookie); <%-- L74 --%>
 		}
 		catch(Exception e)
 		{
