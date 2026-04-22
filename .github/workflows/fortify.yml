@@ -150,7 +150,7 @@ jobs:
           cache: maven
 
       - name: Run Fortify on Demand scan
-        uses: appsecai-source/fortify-aviator-remediation-action@main
+        uses: appsecai-source/fortify-aviator-remediation-action/fod-scan@main
         with:
           fod-url: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
           fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
@@ -198,7 +198,7 @@ jobs:
           setup-java: 'true'
           java-version: '8'
           java-distribution: temurin
-          github-token: ${{ secrets.REMEDIATION_GITHUB_TOKEN || github.token }}
+          github-token: ${{ github.token }}
           github-repository: ${{ github.repository }}
           pr-number: ${{ needs.resolve-pr-context.outputs.pr_number }}
           github-base-ref: ${{ needs.resolve-pr-context.outputs.base_ref }}
