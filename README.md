@@ -6,7 +6,7 @@ The [OWASP Security Shepherd Project](http://bit.ly/owaspSecurityShepherd) is a 
 
 # Security Automation
 Fortify on Demand scanning and Fortify Aviator remediation are combined in `.github/workflows/fortify.yml`.
-The supporting Python remediation engine and setup notes live in `fortify_aviator_remediation/`.
+This repository now consumes the reusable `appsecai-source/fortify-aviator-remediation-action` GitHub Action for both the FoD scan wrapper and Aviator remediation flow.
 
 # Where can I download Security Shepherd?
 

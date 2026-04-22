@@ -150,22 +150,21 @@ jobs:
           cache: maven
 
       - name: Run Fortify on Demand scan
-        uses: fortify/github-action@v3
-        env:
-          FOD_URL: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
-          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
-          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
-          FOD_TENANT: ${{ secrets.FOD_TENANT }}
-          # Numeric FoD release identifier; release must already exist and be configured.
-          FOD_RELEASE: ${{ secrets.FOD_RELEASE_ID }}
-          PACKAGE_EXTRA_OPTS: -bt mvn
-          DO_WAIT: false
-          DO_JOB_SUMMARY: ${{ vars.FOD_DO_JOB_SUMMARY || 'false' }}
+        uses: appsecai-source/fortify-aviator-remediation-action/fod-scan@d4b17a4316452a1200dbec675cfedb252d9218a5
+        with:
+          fod-url: ${{ vars.FOD_URL || 'https://ams.fortify.com' }}
+          fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
+          fod-client-secret: ${{ secrets.FOD_CLIENT_SECRET }}
+          fod-tenant: ${{ secrets.FOD_TENANT }}
+          fod-release-id: ${{ secrets.FOD_RELEASE_ID }}
+          package-extra-opts: -bt mvn
+          do-wait: 'true'
+          do-job-summary: ${{ vars.FOD_DO_JOB_SUMMARY || 'false' }}
           # Disable GitHub Code Scanning export by default; it can add noticeable time
           # when processing large finding sets and is not required for Aviator remediation.
-          DO_EXPORT: ${{ vars.FOD_DO_EXPORT || 'false' }}
-          DO_SCA_SCAN: true
-          DO_PR_COMMENT: ${{ github.event_name == 'pull_request' }}
+          do-export: 'false'
+          do-sca-scan: 'true'
+          do-pr-comment: ${{ github.event_name == 'pull_request' }}
 
   fortify-aviator-remediation:
     needs: [resolve-pr-context, fortify-fod]
@@ -174,24 +173,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      FOD_BASE_URL: ${{ vars.FOD_BASE_URL || 'https://api.ams.fortify.com' }}
-      FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
-      FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
-      FOD_TENANT: ${{ secrets.FOD_TENANT }}
-      FOD_USER: ${{ secrets.FOD_USER }}
-      FOD_PASSWORD: ${{ secrets.FOD_PASSWORD || secrets.FOD_PAT }}
-      FOD_OAUTH_SCOPE: ${{ vars.FOD_OAUTH_SCOPE || 'api-tenant' }}
-      FOD_RELEASE_ID: ${{ secrets.FOD_RELEASE_ID }}
-      FOD_SEVERITY_STRINGS: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical' }}
-      FOD_PR_GROUPING: ${{ vars.FOD_PR_GROUPING || 'category' }}
-      FOD_VERIFY_SSL: ${{ vars.FOD_VERIFY_SSL || 'true' }}
-      REMEDIATION_VALIDATE_COMMAND: ${{ vars.REMEDIATION_VALIDATE_COMMAND || 'mvn -q -DskipTests compile' }}
-      # Use a PAT if provided; otherwise fall back to the workflow token.
-      GITHUB_TOKEN: ${{ secrets.REMEDIATION_GITHUB_TOKEN || github.token }}
-      GITHUB_REPOSITORY: ${{ github.repository }}
-      PR_NUMBER: ${{ needs.resolve-pr-context.outputs.pr_number }}
-      GITHUB_BASE_REF: ${{ needs.resolve-pr-context.outputs.base_ref }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -199,22 +180,25 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.resolve-pr-context.outputs.checkout_ref }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Run Fortify Aviator remediation action
+        uses: appsecai-source/fortify-aviator-remediation-action@d4b17a4316452a1200dbec675cfedb252d9218a5
         with:
-          python-version: '3.11'
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
+          fod-base-url: ${{ vars.FOD_BASE_URL || 'https://api.ams.fortify.com' }}
+          fod-client-id: ${{ secrets.FOD_CLIENT_ID }}
+          fod-client-secret: ${{ secrets.FOD_CLIENT_SECRET }}
+          fod-tenant: ${{ secrets.FOD_TENANT }}
+          fod-user: ${{ secrets.FOD_USER }}
+          fod-password: ${{ secrets.FOD_PASSWORD || secrets.FOD_PAT }}
+          fod-oauth-scope: ${{ vars.FOD_OAUTH_SCOPE || 'api-tenant' }}
+          fod-release-id: ${{ secrets.FOD_RELEASE_ID }}
+          fod-severity-strings: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical' }}
+          fod-pr-grouping: ${{ vars.FOD_PR_GROUPING || 'category' }}
+          fod-verify-ssl: ${{ vars.FOD_VERIFY_SSL || 'true' }}
+          remediation-validate-command: ${{ vars.REMEDIATION_VALIDATE_COMMAND || 'mvn -q -DskipTests compile' }}
+          setup-java: 'true'
           java-version: '8'
-          cache: maven
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r fortify_aviator_remediation/requirements.txt
-
-      - name: Run Fortify Aviator remediation engine
-        run: python fortify_aviator_remediation/app/remediation_engine.py
+          java-distribution: temurin
+          github-token: ${{ secrets.REMEDIATION_GITHUB_TOKEN || github.token }}
+          github-repository: ${{ github.repository }}
+          pr-number: ${{ needs.resolve-pr-context.outputs.pr_number }}
+          github-base-ref: ${{ needs.resolve-pr-context.outputs.base_ref }}
