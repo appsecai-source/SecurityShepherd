@@ -191,7 +191,7 @@ jobs:
           fod-password: ${{ secrets.FOD_PASSWORD || secrets.FOD_PAT }}
           fod-oauth-scope: ${{ vars.FOD_OAUTH_SCOPE || 'api-tenant' }}
           fod-release-id: ${{ secrets.FOD_RELEASE_ID }}
-          fod-severity-strings: ${{ vars.FOD_SEVERITY_STRINGS || 'Critical' }}
+          fod-severity-strings: ${{ vars.FOD_SEVERITY_STRINGS || 'low' }}
           fod-pr-grouping: ${{ vars.FOD_PR_GROUPING || 'category' }}
           fod-verify-ssl: ${{ vars.FOD_VERIFY_SSL || 'true' }}
           remediation-validate-command: ${{ vars.REMEDIATION_VALIDATE_COMMAND || 'mvn -q -DskipTests compile' }}
